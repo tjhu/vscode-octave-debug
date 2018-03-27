@@ -32,6 +32,7 @@
 	},
 	"dependencies": {
 		"await-notify": "1.0.1",
+		"vscode": "^1.1.6",
 		"vscode-debugadapter": "1.27.0",
 		"vscode-debugprotocol": "1.27.0"
 	},
