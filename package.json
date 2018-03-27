@@ -8,7 +8,7 @@
 		"vscode": "^1.18.0",
 		"node": "^7.9.0"
 	},
-	"icon": "images/mock-debug-icon.png",
+	"icon": "images/octave-debug-icon.png",
 	"categories": [
 		"Debuggers"
 	],
@@ -51,9 +51,23 @@
 		"onCommand:extension.octave-debug.getProgramName"
 	],
 	"contributes": {
+		"languages": [
+			{
+				"id": "octave",
+				"aliases": [
+					"matlab"
+				],
+				"extensions": [
+					".m"
+				]
+			}
+		],
 		"breakpoints": [
 			{
 				"language": "octave"
+			},
+			{
+				"language": "matlab"
 			}
 		],
 		"debuggers": [
@@ -62,6 +76,16 @@
 				"label": "Octave Debug",
 				"program": "./out/DebugAdapter.js",
 				"runtime": "node",
+				"languages": [
+					"octave",
+					"matlab"
+				],
+				"enableBreakpointsFor": {
+					"languageIds": [
+						"octave",
+						"matlab"
+					]
+				},
 				"configurationAttributes": {
 					"launch": {
 						"required": [

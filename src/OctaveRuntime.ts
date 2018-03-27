@@ -15,7 +15,7 @@ export interface FakeStackFrame {
 }
 
 /**
- * A Mock runtime with minimal debugger functionality.
+ * A Octave runtime with minimal debugger functionality.
  */
 export class OctaveRuntime extends EventEmitter {
 
@@ -31,7 +31,7 @@ export class OctaveRuntime extends EventEmitter {
 	// This is the next line that will be 'executed'
 	private _currentLine = 0;
 
-	// maps from sourceFile to array of Mock breakpoints
+	// maps from sourceFile to array of Octave breakpoints
 	private _breakPoints = new Map<string, OctaveBreakpoint[]>();
 
 	// since we want to send breakpoint events, we will assign an id to every event

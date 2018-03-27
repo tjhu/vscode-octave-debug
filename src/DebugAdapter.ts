@@ -1,4 +1,7 @@
-import { MockDebugSession } from './OctaveDebug';
+import {
+	DebugSession
+} from 'vscode-debugadapter';
+import { OctaveDebugSession } from './OctaveDebug';
 
 console.log("fuck bro");
-MockDebugSession.run(MockDebugSession);
+DebugSession.run(OctaveDebugSession);

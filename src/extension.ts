@@ -1,12 +1,8 @@
-/*---------------------------------------------------------
- * Copyright (C) Microsoft Corporation. All rights reserved.
- *--------------------------------------------------------*/
-
 'use strict';
 
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { MockDebugSession } from './OctaveDebug';
+import { OctaveDebugSession } from './OctaveDebug';
 import * as Net from 'net';
 
 /*
@@ -14,20 +10,20 @@ import * as Net from 'net';
  * debug adapter should run inside the extension host.
  * Please note: the test suite does no longer work in this mode.
  */
-const EMBED_DEBUG_ADAPTER = false;
+const EMBED_DEBUG_ADAPTER = true;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log("You will shine. Like a blue star in the sky.");
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.octave-debug.getProgramName', config => {
 		return vscode.window.showInputBox({
-			placeHolder: "Please enter the name of a markdown file in the workspace folder",
+			placeHolder: "Please enter the name of an octave/matlab file in the workspace folder",
 			value: "P100Q12.m"
 		});
 	}));
 
-	// register a configuration provider for 'mock' debug type
-	const provider = new MockConfigurationProvider();
+	// register a configuration provider for 'octave' debug type
+	const provider = new OctaveDebugConfigurationProvider();
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('octave', provider));
 	context.subscriptions.push(provider);
 }
@@ -36,7 +32,7 @@ export function deactivate() {
 	// nothing to do
 }
 
-class MockConfigurationProvider implements vscode.DebugConfigurationProvider {
+class OctaveDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 	private _server?: Net.Server;
 
@@ -70,7 +66,7 @@ class MockConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 				// start listening on a random port
 				this._server = Net.createServer(socket => {
-					const session = new MockDebugSession();
+					const session = new OctaveDebugSession();
 					session.setRunAsServer(true);
 					session.start(<NodeJS.ReadableStream>socket, socket);
 				}).listen(0);
@@ -82,6 +78,8 @@ class MockConfigurationProvider implements vscode.DebugConfigurationProvider {
 
 		return config;
 	}
+
+	
 
 	dispose() {
 		if (this._server) {
