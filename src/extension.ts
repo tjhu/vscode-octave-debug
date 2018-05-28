@@ -16,9 +16,18 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log("You will shine. Like a blue star in the sky.");
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.octave-debug.getProgramName', config => {
+		let editor = vscode.window.activeTextEditor;
+		let defaultFileName: string;
+		if (editor) {
+			defaultFileName = vscode.workspace.asRelativePath(editor.document.fileName);
+
+		} else {
+			defaultFileName = "hello.m";
+		}
+		
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the name of an octave/matlab file in the workspace folder",
-			value: "P100Q12.m"
+			value: defaultFileName
 		});
 	}));
 

@@ -17,7 +17,9 @@ const { Subject } = require('await-notify');
  * The schema for these attributes lives in the package.json of the octave-debug extension.
  * The interface should always match this schema.
  */
-interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
+export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
+	/** An absolute path to the debugger. */
+	exec: string;
 	/** An absolute path to the "program" to debug. */
 	program: string;
 	/** Automatically stop target after launch. If not specified, target does not stop. */
@@ -85,7 +87,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * to interrogate the features the debug adapter provides.
 	 */
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
 
@@ -118,6 +119,8 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
+		console.log("launchRequest request: ", response, args);
+		console.log(args.exec);
 		console.log("Launch request received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
@@ -126,6 +129,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
+		this._runtime.init(args);
 		this._runtime.start(args.program, !!args.stopOnEntry);
 
 		this.sendResponse(response);

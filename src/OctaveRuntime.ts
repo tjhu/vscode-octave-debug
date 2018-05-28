@@ -1,5 +1,9 @@
-import { readFileSync } from 'fs';
+import { readFileSync, WriteStream } from 'fs';
 import { EventEmitter } from 'events';
+import { LaunchRequestArguments } from './OctaveDebug';
+import { ChildProcess, spawn } from 'child_process';
+import { Writable } from 'stream';
+
 
 export interface OctaveBreakpoint {
 	id: number;
@@ -18,6 +22,9 @@ export interface FakeStackFrame {
  * A Octave runtime with minimal debugger functionality.
  */
 export class OctaveRuntime extends EventEmitter {
+
+	private _session?: ChildProcess;
+	private _stdin: Writable = new Writable;
 
 	// the initial (and one and only) file we are 'debugging'
 	private _sourceFile: string = "";
@@ -41,7 +48,20 @@ export class OctaveRuntime extends EventEmitter {
 
 	constructor() {
 		super();
+
 		console.log("Octave runtime is actived");
+	}
+
+	/**
+	 * init
+args: LaunchRequestArguments	 */
+	public init(args: LaunchRequestArguments) {
+		// this._session = spawn("C:\\Users\\maiti\\Desktop\\zzz.exe");
+		this._session = spawn(args.exec);
+		this._stdin = this._session.stdin;
+		this._session.stdout.on("data", (buffer) => {console.log(buffer.toString());});
+		this._session.stderr.on("data", (buffer) => {console.log(buffer.toString());});
+		console.log(this._session.pid);
 	}
 
 	/**
@@ -54,13 +74,19 @@ export class OctaveRuntime extends EventEmitter {
 
 		this.verifyBreakpoints(this._sourceFile);
 
+		this._stdin.write(program + '\n');
+		//this._stdin.write("ayy");
+
 		if (stopOnEntry) {
 			// we step once
-			this.step(false, 'stopOnEntry');
+			this.run(false, 'stopOnStep');
 		} else {
 			// we just start to run until we hit a breakpoint or an exception
 			this.continue();
 		}
+
+		
+		
 	}
 
 	/**
@@ -75,6 +101,10 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public step(reverse = false, event = 'stopOnStep') {
 		this.run(reverse, event);
+		if (this._session) {
+			this._stdin.write("argv()");
+		}
+		this._stdin.write("argv()");
 	}
 
 	/**
@@ -113,6 +143,12 @@ export class OctaveRuntime extends EventEmitter {
 
 		this.verifyBreakpoints(path);
 
+
+		// Actual work
+		if (this._session) {
+			this._stdin.write("dbstop " + path + " " + line);
+		}
+		
 		return bp;
 	}
 

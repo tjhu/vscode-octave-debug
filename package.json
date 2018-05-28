@@ -92,10 +92,15 @@
 							"program"
 						],
 						"properties": {
+							"exec": {
+								"type": "string",
+								"description": "Octave executable.",
+								"default": "octave-cli"
+							},
 							"program": {
 								"type": "string",
 								"description": "Absolute path to a text file.",
-								"default": "${workspaceFolder}/${command:AskForProgramName}"
+								"default": "${workspaceFolder}\\${command:AskForProgramName}"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
@@ -115,7 +120,8 @@
 						"type": "octave",
 						"request": "launch",
 						"name": "A hella awesome debugger by a good boy",
-						"program": "${workspaceFolder}/${command:AskForProgramName}",
+						"exec": "octave-cli",
+						"program": "${workspaceFolder}\\${command:AskForProgramName}",
 						"stopOnEntry": true
 					}
 				],
@@ -127,6 +133,7 @@
 							"type": "octave",
 							"request": "launch",
 							"name": "A hella awesome debugger by a good boy",
+							"exec": "octave-cli",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
 							"stopOnEntry": true
 						}
