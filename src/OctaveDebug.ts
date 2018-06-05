@@ -20,6 +20,8 @@ const { Subject } = require('await-notify');
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	/** An absolute path to the debugger. */
 	exec: string;
+	/** An absolute path to the current working directory. */
+	cwd: string;
 	/** An absolute path to the "program" to debug. */
 	program: string;
 	/** Automatically stop target after launch. If not specified, target does not stop. */
@@ -129,8 +131,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.init(args);
-		this._runtime.start(args.program, !!args.stopOnEntry);
+		this._runtime.start(args, !!args.stopOnEntry);
 
 		this.sendResponse(response);
 	}

@@ -97,6 +97,11 @@
 								"description": "Octave executable.",
 								"default": "octave-cli"
 							},
+							"cwd": {
+								"type": "string",
+								"description": "Current working directory.",
+								"default": "${workspaceFolder}/"
+							},
 							"program": {
 								"type": "string",
 								"description": "Absolute path to a text file.",
@@ -120,6 +125,7 @@
 						"type": "octave",
 						"request": "launch",
 						"name": "A hella awesome debugger by a good boy",
+						"cwd": "${workspaceFolder}/",
 						"exec": "octave-cli",
 						"program": "${workspaceFolder}\\${command:AskForProgramName}",
 						"stopOnEntry": true
@@ -134,6 +140,7 @@
 							"request": "launch",
 							"name": "A hella awesome debugger by a good boy",
 							"exec": "octave-cli",
+							"cwd": "^\"\\${workspaceFolder}/\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
 							"stopOnEntry": true
 						}

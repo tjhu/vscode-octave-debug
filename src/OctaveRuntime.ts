@@ -3,7 +3,10 @@ import { EventEmitter } from 'events';
 import { LaunchRequestArguments } from './OctaveDebug';
 import { ChildProcess, spawn } from 'child_process';
 import { Writable } from 'stream';
-
+import { normalizePath } from './utils';
+import * as Vscode from 'vscode';
+import * as Path from 'path';
+import * as Fs from 'fs';
 
 export interface OctaveBreakpoint {
 	id: number;
@@ -55,26 +58,45 @@ export class OctaveRuntime extends EventEmitter {
 	/**
 	 * init
 args: LaunchRequestArguments	 */
-	public init(args: LaunchRequestArguments) {
+	public init() {
 		// this._session = spawn("C:\\Users\\maiti\\Desktop\\zzz.exe");
-		this._session = spawn(args.exec);
-		this._stdin = this._session.stdin;
-		this._session.stdout.on("data", (buffer) => {console.log(buffer.toString());});
-		this._session.stderr.on("data", (buffer) => {console.log(buffer.toString());});
-		console.log(this._session.pid);
+		
 	}
 
 	/**
 	 * Start executing the given program.
 	 */
-	public start(program: string, stopOnEntry: boolean) {
+	public start(args: LaunchRequestArguments, stopOnEntry: boolean) {
+		let pathProperty = Path.parse(args.program);
+		let dir = pathProperty.dir;
+		let file = pathProperty.name;
 
-		this.loadSource(program);
+
+		this._session = spawn(args.exec, [], { cwd: dir });
+		this._stdin = this._session.stdin;
+		this._session.stdout.on("data", (buffer) => {console.log(buffer.toString());});
+		this._session.stderr.on("data", (buffer) => {console.log(buffer.toString());});
+		console.log(this._session.pid);
+
+		this.loadSource(args.program);
 		this._currentLine = -1;
 
 		this.verifyBreakpoints(this._sourceFile);
+		
 
-		this._stdin.write(program + '\n');
+		// Verify file and folder existence
+		// xxx: We can improve the error handling
+		if (!Fs.existsSync(args.program)) {
+			console.error( `Error: File ${args.program} not found`);
+		}
+		if (args.cwd && !Fs.existsSync(args.cwd)) {
+			console.error( `Error: Folder ${args.cwd} not found`);
+		}
+		
+		let program = Vscode.workspace.asRelativePath(args.program);
+		program = normalizePath(program, args.cwd);
+		this._stdin.write('pwd()' + '\n');
+		this._stdin.write(file + '\n');
 		//this._stdin.write("ayy");
 
 		if (stopOnEntry) {
@@ -102,9 +124,9 @@ args: LaunchRequestArguments	 */
 	public step(reverse = false, event = 'stopOnStep') {
 		this.run(reverse, event);
 		if (this._session) {
-			this._stdin.write("argv()");
+			this._stdin.write("argv()\n");
 		}
-		this._stdin.write("argv()");
+		this._stdin.write("argv()\n");
 	}
 
 	/**
