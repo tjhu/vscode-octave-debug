@@ -89,6 +89,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * to interrogate the features the debug adapter provides.
 	 */
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
+		console.log("InitializeRequestArguments:", args);
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
 
@@ -126,6 +127,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		console.log("Launch request received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
+		logger.log("setup");
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);

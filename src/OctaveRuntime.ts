@@ -168,7 +168,7 @@ args: LaunchRequestArguments	 */
 
 		// Actual work
 		if (this._session) {
-			this._stdin.write("dbstop " + path + " " + line);
+			this._stdin.write('dbstop ' + path + ' ' + line + '\n');
 		}
 		
 		return bp;
