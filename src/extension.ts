@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { OctaveDebugSession } from './OctaveDebug';
+import { OctaveDebugSession } from './OctaveDebugAdapter';
 import * as Net from 'net';
 
 /*
@@ -13,8 +13,6 @@ import * as Net from 'net';
 const EMBED_DEBUG_ADAPTER = true;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log("You will shine. Like a blue star in the sky.");
-
 	context.subscriptions.push(vscode.commands.registerCommand('extension.octave-debug.getProgramName', config => {
 		let editor = vscode.window.activeTextEditor;
 		let defaultFileName: string;

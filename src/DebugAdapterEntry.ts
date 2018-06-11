@@ -1,7 +1,6 @@
 import {
 	DebugSession
 } from 'vscode-debugadapter';
-import { OctaveDebugSession } from './OctaveDebug';
+import { OctaveDebugSession } from './OctaveDebugAdapter';
 
-console.log("fuck bro");
 DebugSession.run(OctaveDebugSession);

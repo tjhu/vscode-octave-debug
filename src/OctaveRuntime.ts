@@ -1,6 +1,6 @@
 import { readFileSync, WriteStream } from 'fs';
 import { EventEmitter } from 'events';
-import { LaunchRequestArguments } from './OctaveDebug';
+import { LaunchRequestArguments } from './OctaveDebugAdapter';
 import { ChildProcess, spawn } from 'child_process';
 import { Writable } from 'stream';
 import { normalizePath } from './utils';
@@ -51,16 +51,6 @@ export class OctaveRuntime extends EventEmitter {
 
 	constructor() {
 		super();
-
-		console.log("Octave runtime is actived");
-	}
-
-	/**
-	 * init
-args: LaunchRequestArguments	 */
-	public init() {
-		// this._session = spawn("C:\\Users\\maiti\\Desktop\\zzz.exe");
-		
 	}
 
 	/**
