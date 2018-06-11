@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import { Readable, Writable } from 'stream';
 
-export class OctaveSession {
+export class OctaveDebuggerSession {
 	private ErrFunc = () => { console.error('Octave runtime is being used before initialized'); };
 	public stdin = new Writable;
 	public stdout = new Readable;
@@ -21,11 +21,11 @@ export class OctaveSession {
 		this.kill = () => session.kill();
 	}
 
-	public static spawnSession(filename: string, exec: string, args: string[]=[], options: {}={}) {
-		return new OctaveSession(spawn(exec, args, options));
+	public static spawnSession(exec: string, args: string[]=[], options: {}={}) {
+		return new OctaveDebuggerSession(spawn(exec, args, options));
 	}
 
 	public static getDummySession() {
-		return new OctaveSession();
+		return new OctaveDebuggerSession();
 	}
 }

@@ -103,11 +103,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		response.body.supportsStepBack = true;
 
 		this.sendResponse(response);
-
-		// since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
-		// we request them early by sending an 'initializeRequest' to the frontend.
-		// The frontend will end the configuration sequence by calling 'configurationDone' request.
-		this.sendEvent(new InitializedEvent());
 	}
 
 	/**
@@ -135,11 +130,16 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// start the program in the runtime
 		this._runtime.start(args, !!args.stopOnEntry);
 
+		// since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
+		// we request them early by sending an 'initializeRequest' to the frontend.
+		// The frontend will end the configuration sequence by calling 'configurationDone' request.
+		this.sendEvent(new InitializedEvent());
+
 		this.sendResponse(response);
 	}
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
-		console.log("Do you want a friend?");
+		console.log("setBreakPointsRequest received");
 		const path = <string>args.source.path;
 		const clientLines = args.lines || [];
 

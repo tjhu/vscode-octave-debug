@@ -1,9 +1,9 @@
 import { readFileSync, WriteStream } from 'fs';
 import { EventEmitter } from 'events';
 import { LaunchRequestArguments } from './OctaveDebugAdapter';
-import { ChildProcess, spawn } from 'child_process';
 import { Writable } from 'stream';
 import { normalizePath } from './utils';
+import { OctaveDebuggerSession } from './OctaveSession';
 import * as Vscode from 'vscode';
 import * as Path from 'path';
 import * as Fs from 'fs';
@@ -26,7 +26,7 @@ export interface FakeStackFrame {
  */
 export class OctaveRuntime extends EventEmitter {
 
-	private _session?: ChildProcess;
+	private _session: OctaveDebuggerSession = OctaveDebuggerSession.getDummySession();
 	private _stdin: Writable = new Writable;
 
 	// the initial (and one and only) file we are 'debugging'
@@ -34,6 +34,7 @@ export class OctaveRuntime extends EventEmitter {
 	public get sourceFile() {
 		return this._sourceFile;
 	}
+	private file: string = "";
 
 	// the contents (= lines) of the one and only file
 	private _sourceLines: string[] = [];
@@ -60,13 +61,14 @@ export class OctaveRuntime extends EventEmitter {
 		let pathProperty = Path.parse(args.program);
 		let dir = pathProperty.dir;
 		let file = pathProperty.name;
+		this.file = file;
 
 
-		this._session = spawn(args.exec, [], { cwd: dir });
+		this._session = OctaveDebuggerSession.spawnSession(args.exec, [], { cwd: dir });
 		this._stdin = this._session.stdin;
 		this._session.stdout.on("data", (buffer) => {console.log(buffer.toString());});
 		this._session.stderr.on("data", (buffer) => {console.log(buffer.toString());});
-		console.log(this._session.pid);
+		
 
 		this.loadSource(args.program);
 		this._currentLine = -1;
