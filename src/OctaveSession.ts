@@ -2,7 +2,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { Readable, Writable } from 'stream';
 
 export class OctaveDebuggerSession {
-	private ErrFunc = () => { console.error('Octave runtime is being used before initialized'); };
+	private ErrFunc = () => { console.log('Octave runtime is being used before initialized'); };
 	public stdin = new Writable;
 	public stdout = new Readable;
 	public stderr = new Readable;
@@ -11,6 +11,7 @@ export class OctaveDebuggerSession {
 
 	constructor(session?:ChildProcess) {
         if (session === undefined) {
+			this.write = this.ErrFunc;
             return;
         }
 
@@ -27,5 +28,9 @@ export class OctaveDebuggerSession {
 
 	public static getDummySession() {
 		return new OctaveDebuggerSession();
+	}
+
+	public write(str: string) {
+		this.stdin.write(str + '\n');
 	}
 }

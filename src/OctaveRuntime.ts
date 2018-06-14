@@ -2,11 +2,11 @@ import { readFileSync, WriteStream } from 'fs';
 import { EventEmitter } from 'events';
 import { LaunchRequestArguments } from './OctaveDebugAdapter';
 import { Writable } from 'stream';
-import { normalizePath } from './utils';
 import { OctaveDebuggerSession } from './OctaveSession';
 import * as Vscode from 'vscode';
 import * as Path from 'path';
 import * as Fs from 'fs';
+import { DebugProtocol } from 'vscode-debugprotocol';
 
 export interface OctaveBreakpoint {
 	id: number;
@@ -54,10 +54,7 @@ export class OctaveRuntime extends EventEmitter {
 		super();
 	}
 
-	/**
-	 * Start executing the given program.
-	 */
-	public start(args: LaunchRequestArguments, stopOnEntry: boolean) {
+	public initialize(args: LaunchRequestArguments) {
 		let pathProperty = Path.parse(args.program);
 		let dir = pathProperty.dir;
 		let file = pathProperty.name;
@@ -73,7 +70,7 @@ export class OctaveRuntime extends EventEmitter {
 		this.loadSource(args.program);
 		this._currentLine = -1;
 
-		this.verifyBreakpoints(this._sourceFile);
+		// this.verifyBreakpoints(this._sourceFile);
 		
 
 		// Verify file and folder existence
@@ -84,12 +81,17 @@ export class OctaveRuntime extends EventEmitter {
 		if (args.cwd && !Fs.existsSync(args.cwd)) {
 			console.error( `Error: Folder ${args.cwd} not found`);
 		}
+	}
+
+	/**
+	 * Start executing the given program.
+	 */
+	public start(args: LaunchRequestArguments, stopOnEntry: boolean) {	
+		this._session.write('whos');
+		this._session.write('whos');
+		this.setBreakPoint(this.file, 1);
 		
-		let program = Vscode.workspace.asRelativePath(args.program);
-		program = normalizePath(program, args.cwd);
-		this._stdin.write('pwd()' + '\n');
-		this._stdin.write(file + '\n');
-		//this._stdin.write("ayy");
+		this._session.write(this.file);
 
 		if (stopOnEntry) {
 			// we step once
@@ -97,10 +99,7 @@ export class OctaveRuntime extends EventEmitter {
 		} else {
 			// we just start to run until we hit a breakpoint or an exception
 			this.continue();
-		}
-
-		
-		
+		}	
 	}
 
 	/**
@@ -115,10 +114,8 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public step(reverse = false, event = 'stopOnStep') {
 		this.run(reverse, event);
-		if (this._session) {
-			this._stdin.write("argv()\n");
-		}
-		this._stdin.write("argv()\n");
+		this._session.write('dbnext');
+		this._session.write('whos');
 	}
 
 	/**
@@ -147,23 +144,21 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public setBreakPoint(path: string, line: number) : OctaveBreakpoint {
 
-		const bp = <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
-		let bps = this._breakPoints.get(path);
-		if (!bps) {
-			bps = new Array<OctaveBreakpoint>();
-			this._breakPoints.set(path, bps);
-		}
-		bps.push(bp);
+		// const bp = <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
+		// let bps = this._breakPoints.get(path);
+		// if (!bps) {
+		// 	bps = new Array<OctaveBreakpoint>();
+		// 	this._breakPoints.set(path, bps);
+		// }
+		// bps.push(bp);
 
-		this.verifyBreakpoints(path);
+		// this.verifyBreakpoints(path);
 
 
 		// Actual work
-		if (this._session) {
-			this._stdin.write('dbstop ' + path + ' ' + line + '\n');
-		}
-		
-		return bp;
+		this._session.write('dbstop ' + path + ' ' + line + '\n');
+
+		return <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
 	}
 
 	/*
@@ -251,6 +246,19 @@ export class OctaveRuntime extends EventEmitter {
 			});
 		}
 	}
+	
+	public getVariables() {
+		return Array<DebugProtocol.Variable>();
+	}
+
+	private writeToSession(str: string) {
+
+	}
+
+	private writeToSessionAndGetResponse(str: string) {
+		this.writeToSession(str);
+	}
+
 
 	/**
 	 * Fire events if line has a breakpoint or the word 'exception' is found.
@@ -300,6 +308,8 @@ export class OctaveRuntime extends EventEmitter {
 		// nothing interesting found -> continue
 		return false;
 	}
+
+
 
 	private sendEvent(event: string, ... args: any[]) {
 		setImmediate(_ => {

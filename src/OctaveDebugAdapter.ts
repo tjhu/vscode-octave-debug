@@ -7,6 +7,7 @@ import {
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { OctaveRuntime, OctaveBreakpoint } from './OctaveRuntime';
+import * as Path from 'path';
 
 const { Subject } = require('await-notify');
 
@@ -117,9 +118,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
-		console.log("launchRequest request: ", response, args);
-		console.log(args.exec);
-		console.log("Launch request received.");
+		console.log("launchRequest received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 		logger.log("setup");
@@ -127,13 +126,17 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
-		// start the program in the runtime
-		this._runtime.start(args, !!args.stopOnEntry);
+		
+		// start debugger in the runtime
+		this._runtime.initialize(args);
 
 		// since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
 		// we request them early by sending an 'initializeRequest' to the frontend.
 		// The frontend will end the configuration sequence by calling 'configurationDone' request.
 		this.sendEvent(new InitializedEvent());
+
+		// run the program
+		this._runtime.start(args, !!args.stopOnEntry);
 
 		this.sendResponse(response);
 	}
@@ -141,6 +144,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 		console.log("setBreakPointsRequest received");
 		const path = <string>args.source.path;
+		const func = Path.parse(path).name;
 		const clientLines = args.lines || [];
 
 		// clear all breakpoints for this file
@@ -148,7 +152,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 		// set and verify breakpoint locations
 		const actualBreakpoints = clientLines.map(l => {
-			let { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
+			let { verified, line, id } = this._runtime.setBreakPoint(func, this.convertClientLineToDebugger(l));
 			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
 			bp.id= id;
 			return bp;
@@ -191,8 +195,8 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
-		scopes.push(new Scope("Local", this._variableHandles.create("local_" + frameReference), false));
-		scopes.push(new Scope("Global", this._variableHandles.create("global_" + frameReference), true));
+		scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
+		scopes.push(new Scope("Global", this._variableHandles.create("global"), true));
 
 		response.body = {
 			scopes: scopes
@@ -258,7 +262,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
-
+		console.log('evaluateRequest received');
 		let reply: string | undefined = undefined;
 
 		if (args.context === 'repl') {
