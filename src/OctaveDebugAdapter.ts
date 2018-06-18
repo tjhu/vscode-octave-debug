@@ -123,7 +123,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 		
 		// start debugger in the runtime
-		this._runtime.initialize(args);
+		await this._runtime.initialize(args);
 
 		// since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
 		// we request them early by sending an 'initializeRequest' to the frontend.
@@ -179,7 +179,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// const stk = this._runtime.stack(startFrame, endFrame);
 
 		response.body = {
-			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame'}],
+			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: 'fuck', line: 10, column: 3}],
 			totalFrames: 1
 		};
 		this.sendResponse(response);

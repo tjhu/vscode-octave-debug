@@ -7,6 +7,7 @@ export class OctaveDebuggerSession {
 	public stdout = new Readable;
 	public stderr = new Readable;
 	public kill: Function = this.ErrFunc;
+	public pid: number = -1;
 
 	constructor(session?:ChildProcess) {
         if (session === undefined) {
@@ -14,6 +15,7 @@ export class OctaveDebuggerSession {
             return;
         }
 
+		this.pid = session.pid;
 		this.stdin = session.stdin;
 		this.stdout = session.stdout;
 		this.stderr = session.stderr;

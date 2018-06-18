@@ -56,7 +56,7 @@ export class OctaveRuntime extends EventEmitter {
 		super();
 	}
 
-	public initialize(args: LaunchRequestArguments) {
+	public async initialize(args: LaunchRequestArguments) {
 		let pathProperty = Path.parse(args.program);
 		let dir = pathProperty.dir;
 		let file = pathProperty.name;
@@ -64,8 +64,11 @@ export class OctaveRuntime extends EventEmitter {
 
 
 		this._session = OctaveDebuggerSession.spawnSession(args.exec, [], { cwd: dir });
+		console.log('spawn session with pid', this._session.pid);
 		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
 		this._sc.init(this._session.stdin, this._session.stdout);
+		this._session.write('debug_on_error(1)');
+		console.log(await this._sc.request('debug_on_error()'));
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -233,6 +236,7 @@ export class OctaveRuntime extends EventEmitter {
 	}
 	
 	public getVariables() {
+		this._sc.request('whos');
 		return Array<DebugProtocol.Variable>();
 	}
 
