@@ -7,20 +7,23 @@
  */
 
 import { Writable, Readable } from 'stream';
-import * as RX from './regExp';
+import * as RX from './RegExp';
+import * as RH from './ResponseHelper';
 
 interface RequestTask {
-    command: string | null;
+    command?: string;
     resolve: Function;
     reject: Function;
 }
 
 export class StreamCatcher {
-    public debug: boolean = false;
+    public debug: boolean = true;
     private requestQueue: RequestTask[] = [];
     private requestRunning?: RequestTask= undefined;
 
-    private buffer: string[] = [''];
+    private buffer: string[] = [];
+
+    public inDebugMode: boolean = false;
 
     // xxx: consider removing ready - the user should not have to care about that...
     public ready: boolean = false;
@@ -29,56 +32,23 @@ export class StreamCatcher {
 
     public input: Writable = new Writable;
 
-    constructor() {
-        // Listen for a ready signal
-        const result = this.request(null)
-            .then((res) => {
-                if (this.debug) {
-                    console.log('ready', res);
-                }
-                this.readyResponse = res;
-                this.ready = true;
-                this.readyListeners.forEach(f => f(res));
-            });
+    constructor() {}
 
-    }
-
-    public launch(input: Writable, output: Readable) {
+    public init(input: Writable, output: Readable) {
         this.input = input;
 
         let lastBuffer = '';
-        let timeout: NodeJS.Timer | null = null;
+
         output.on('data', (buffer) => {
             if (this.debug) {
+                console.log(buffer);
                 console.log('RAW:', buffer.toString());
             }
             const data = lastBuffer + buffer.toString();
             const lines = data.split(/\r\n|\r|\n/);
-            const firstLine = lines[0];
-            const lastLine = lines[lines.length - 1];
-            const commandIsDone = RX.lastCommandLine.test(lastLine);
 
-            // xxx: Windows restart workaround
-            // the windows perl debugger doesn't end the current restart request so we have to
-            // simulate a proper request end.
-            if ((/^win/.test(process.platform) && RX.restartWarning.test(firstLine)) || timeout) {
-                if (this.debug && RX.restartWarning.test(firstLine)) {
-                    console.log('RAW> Waiting to fake end of restart request')
-                };
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-                timeout = setTimeout(() => {
-                    timeout = null;
-                    if (this.requestRunning) {
-                        if (this.debug) {
-                            console.log('RAW> Fake end of restart request');
-                        }
-                        // xxx: We might want to simulate all the restart output
-                        this.readline('   DB<0> ');
-                    }
-                }, 500);
-            }
+            lines.forEach(line => this.buffer.push(line));
+            const commandIsDone = this.inDebugMode ? RH.isCompleteDebugResponse(this.buffer) : RH.isCompleteAnswerResponse(this.buffer);
 
             if (/\r\n|\r|\n$/.test(data) || commandIsDone) {
                 lastBuffer = '';
@@ -88,21 +58,16 @@ export class StreamCatcher {
                     lastBuffer = temp;
                 }
             }
-            lines.forEach(line => this.readline(line));
+
+            if (commandIsDone) {
+                const data = this.buffer;
+                this.buffer = [];
+                // xxx: We might want to verify the DB nr and the cmd number
+                this.resolveRequest(data);
+            } 
         });
         output.on('close', () => {
-            // xxx: Windows perl debugger just exits on syntax error without "DB<n>"
-            // If theres stuff left in the buffer we push it and end the request.
-            if (this.requestRunning) {
-                if (this.debug) {
-                    console.log('RAW> Fake end of request');
-                }
-                this.readline(lastBuffer);
-                this.readline('Debugged program terminated.  Use q to quit or R to restart,');
-                this.readline('use o inhibit_exit to avoid stopping after program termination,');
-                this.readline('h q, h R or h o to get additional info.');
-                this.readline('   DB<0> ');
-            }
+            console.log('debugger stdout is closed');
         });
     }
 
@@ -110,10 +75,11 @@ export class StreamCatcher {
         if (this.debug) {
             console.log('line:', line);
         } 
-        // if (this.debug) console.log('data:', [...line]);
+        
         this.buffer.push(line);
         // Test for command end
-        if (RX.lastCommandLine.test(line)) {
+        let commandEnd: boolean = false;
+        if (RX.lastCommandLine.test(line) || (!this.inDebugMode && RX.emptyLine.test(line))) {
             if (this.debug) {
                 console.log('END:', line);
             }
@@ -128,7 +94,8 @@ export class StreamCatcher {
         const req = this.requestRunning;
         if (req) {
             if (req.command) {
-                data.unshift(req.command);
+                // prepend command to data
+                // data.unshift(req.command);
             }
 
             req.resolve(data);
@@ -152,7 +119,7 @@ export class StreamCatcher {
         }
     }
 
-    public request(command: string | null): Promise<string[]> {
+    public request(command?: string): Promise<string[]> {
         if (this.debug) {
             console.log(command ? `CMD: "${command}"` : 'REQ-INIT');
         }

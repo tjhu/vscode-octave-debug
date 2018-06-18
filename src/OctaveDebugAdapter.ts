@@ -50,10 +50,10 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	public constructor() {
 		super("octave-debug.txt");
 
-		console.log("Start debuger session");
-		// this debugger uses zero-based lines and columns
-		this.setDebuggerLinesStartAt1(false);
-		this.setDebuggerColumnsStartAt1(false);
+		console.log("Initializeing debug adapter");
+		// this debugger uses one-based lines and columns
+		this.setDebuggerLinesStartAt1(true);
+		this.setDebuggerColumnsStartAt1(true);
 
 		this._runtime = new OctaveRuntime();
 
@@ -90,7 +90,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * to interrogate the features the debug adapter provides.
 	 */
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-		console.log("InitializeRequestArguments:", args);
+		console.log("initializeRequest received");
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
 
@@ -99,9 +99,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 		// make VS Code to use 'evaluate' when hovering over source
 		response.body.supportsEvaluateForHovers = true;
-
-		// make VS Code to show a 'step back' button
-		response.body.supportsStepBack = true;
 
 		this.sendResponse(response);
 	}
@@ -113,8 +110,9 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	protected configurationDoneRequest(response: DebugProtocol.ConfigurationDoneResponse, args: DebugProtocol.ConfigurationDoneArguments): void {
 		super.configurationDoneRequest(response, args);
 
-		// notify the launchRequest that configuration has finished
-		this._configurationDone.notify();
+		// run the program
+		this._runtime.start();
+		
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
@@ -122,9 +120,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 		logger.log("setup");
-
-		// wait until configuration has finished (and configurationDoneRequest has been called)
-		await this._configurationDone.wait(1000);
 
 		
 		// start debugger in the runtime
@@ -135,13 +130,10 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// The frontend will end the configuration sequence by calling 'configurationDone' request.
 		this.sendEvent(new InitializedEvent());
 
-		// run the program
-		this._runtime.start(args, !!args.stopOnEntry);
-
 		this.sendResponse(response);
 	}
 
-	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
+	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments) {
 		console.log("setBreakPointsRequest received");
 		const path = <string>args.source.path;
 		const func = Path.parse(path).name;
@@ -151,16 +143,17 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this._runtime.clearBreakpoints(path);
 
 		// set and verify breakpoint locations
-		const actualBreakpoints = clientLines.map(l => {
-			let { verified, line, id } = this._runtime.setBreakPoint(func, this.convertClientLineToDebugger(l));
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
-			bp.id= id;
-			return bp;
-		});
+		// const actualBreakpoints = clientLines.map(l => {
+		// 	let { verified, line, id } = this._runtime.setBreakPoint(func, this.convertClientLineToDebugger(l));
+		// 	const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
+		// 	bp.id= id;
+		// 	return bp;
+		// });
+		let breakpoints = await this._runtime.setBreakPoints(func, clientLines);
 
 		// send back the actual breakpoint positions
 		response.body = {
-			breakpoints: actualBreakpoints
+			breakpoints: breakpoints
 		};
 		this.sendResponse(response);
 	}
@@ -257,36 +250,12 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
-		this._runtime.step(true);
 		this.sendResponse(response);
 	}
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 		console.log('evaluateRequest received');
 		let reply: string | undefined = undefined;
-
-		if (args.context === 'repl') {
-			// 'evaluate' supports to create and delete breakpoints from the 'repl':
-			const matches = /new +([0-9]+)/.exec(args.expression);
-			if (matches && matches.length === 2) {
-				const mbp = this._runtime.setBreakPoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
-				const bp = <DebugProtocol.Breakpoint> new Breakpoint(mbp.verified, this.convertDebuggerLineToClient(mbp.line), undefined, this.createSource(this._runtime.sourceFile));
-				bp.id= mbp.id;
-				this.sendEvent(new BreakpointEvent('new', bp));
-				reply = `breakpoint created`;
-			} else {
-				const matches = /del +([0-9]+)/.exec(args.expression);
-				if (matches && matches.length === 2) {
-					const mbp = this._runtime.clearBreakPoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
-					if (mbp) {
-						const bp = <DebugProtocol.Breakpoint> new Breakpoint(false);
-						bp.id= mbp.id;
-						this.sendEvent(new BreakpointEvent('removed', bp));
-						reply = `breakpoint deleted`;
-					}
-				}
-			}
-		}
 
 		response.body = {
 			result: reply ? reply : `evaluate(context: '${args.context}', '${args.expression}')`,

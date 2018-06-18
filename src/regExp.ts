@@ -1,6 +1,8 @@
 // Copy and modify from https://github.com/raix/vscode-perl-debug
-export const colors = /\u001b\[([0-9]+)m|\u001b/g;
-export const db = /^DB\<\<?([0-9]+)\>?\>$/;
+export const noise = /\u001b\[([0-9]+)m|\u001b/g;
+export const debugPrompt = /^debug:\>$/;
+export const octavePrompt = /^octave:([0-9]+)\>$/;
+export const emptyLine = /^$/;
 export const restartWarning = /^Warning: some settings and command-line options may be lost!/;
 
 export const breakPoint = {
@@ -13,10 +15,10 @@ export const breakPoint = {
 	// Got a line nr eg.:
 	// '5:\tprint "Testing\\n";'
 	ln: /^ ([0-9]+):/,
-}
+};
 
 export function cleanLine(line: string) {
-	return line.replace(colors, '').replace(/\s|(\\b)/g, '').replace('\b', '');
+	return line.replace(noise, '').replace(/\s|(\\b)/g, '').replace('\b', '');
 }
 
 export function isGarbageLine(line: string) {
@@ -32,12 +34,12 @@ export const lastCommandLine = {
 		/*const chars = new Array([...stripped]);
 		console.log(`CHARS:`, chars);*/
 
-		return db.test(stripped);
+		return debugPrompt.test(stripped);
 	},
 
 	match(line: string) {
 		const stripped = cleanLine(line);
-		return stripped.match(db);
+		return stripped.match(debugPrompt);
 	}
 };
 

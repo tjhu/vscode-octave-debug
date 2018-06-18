@@ -6,8 +6,7 @@ export class OctaveDebuggerSession {
 	public stdin = new Writable;
 	public stdout = new Readable;
 	public stderr = new Readable;
-	public on: Function = this.ErrFunc;
-    public kill: Function = this.ErrFunc;
+	public kill: Function = this.ErrFunc;
 
 	constructor(session?:ChildProcess) {
         if (session === undefined) {
@@ -18,7 +17,6 @@ export class OctaveDebuggerSession {
 		this.stdin = session.stdin;
 		this.stdout = session.stdout;
 		this.stderr = session.stderr;
-		this.on = (type:string, callback:Function) => session.on(type, callback);
 		this.kill = () => session.kill();
 	}
 
@@ -33,4 +31,5 @@ export class OctaveDebuggerSession {
 	public write(str: string) {
 		this.stdin.write(str + '\n');
 	}
+
 }

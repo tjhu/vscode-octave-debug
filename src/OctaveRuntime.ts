@@ -7,6 +7,7 @@ import * as Vscode from 'vscode';
 import * as Path from 'path';
 import * as Fs from 'fs';
 import { DebugProtocol } from 'vscode-debugprotocol';
+import { StreamCatcher } from './StreamCatcher';
 
 export interface OctaveBreakpoint {
 	id: number;
@@ -27,7 +28,7 @@ export interface FakeStackFrame {
 export class OctaveRuntime extends EventEmitter {
 
 	private _session: OctaveDebuggerSession = OctaveDebuggerSession.getDummySession();
-	private _stdin: Writable = new Writable;
+	private _sc: StreamCatcher = new StreamCatcher();
 
 	// the initial (and one and only) file we are 'debugging'
 	private _sourceFile: string = "";
@@ -62,16 +63,8 @@ export class OctaveRuntime extends EventEmitter {
 
 
 		this._session = OctaveDebuggerSession.spawnSession(args.exec, [], { cwd: dir });
-		this._stdin = this._session.stdin;
-		this._session.stdout.on("data", (buffer) => {console.log(buffer.toString());});
-		this._session.stderr.on("data", (buffer) => {console.log(buffer.toString());});
-		
-
-		this.loadSource(args.program);
-		this._currentLine = -1;
-
-		// this.verifyBreakpoints(this._sourceFile);
-		
+		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString());});
+		this._sc.init(this._session.stdin, this._session.stdout);
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -81,25 +74,17 @@ export class OctaveRuntime extends EventEmitter {
 		if (args.cwd && !Fs.existsSync(args.cwd)) {
 			console.error( `Error: Folder ${args.cwd} not found`);
 		}
+		
+		console.log('debugger is running in the background');
 	}
 
 	/**
 	 * Start executing the given program.
 	 */
-	public start(args: LaunchRequestArguments, stopOnEntry: boolean) {	
-		this._session.write('whos');
-		this._session.write('whos');
-		this.setBreakPoint(this.file, 1);
-		
+	public start() {	
 		this._session.write(this.file);
-
-		if (stopOnEntry) {
-			// we step once
-			this.run(false, 'stopOnStep');
-		} else {
-			// we just start to run until we hit a breakpoint or an exception
-			this.continue();
-		}	
+		this._sc.inDebugMode = true;
+		console.log('start debugging');
 	}
 
 	/**
@@ -112,10 +97,8 @@ export class OctaveRuntime extends EventEmitter {
 	/**
 	 * Step to the next/previous non empty line.
 	 */
-	public step(reverse = false, event = 'stopOnStep') {
-		this.run(reverse, event);
+	public step() {
 		this._session.write('dbnext');
-		this._session.write('whos');
 	}
 
 	/**
@@ -142,7 +125,7 @@ export class OctaveRuntime extends EventEmitter {
 	/*
 	 * Set breakpoint in file with given line.
 	 */
-	public setBreakPoint(path: string, line: number) : OctaveBreakpoint {
+	public async setBreakPoints(func: string, line: number[]) : Promise<OctaveBreakpoint[]> {
 
 		// const bp = <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
 		// let bps = this._breakPoints.get(path);
@@ -156,9 +139,15 @@ export class OctaveRuntime extends EventEmitter {
 
 
 		// Actual work
-		this._session.write('dbstop ' + path + ' ' + line + '\n');
-
-		return <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
+		// let c = await this._sc.request('dbstop ' + func + ' ' + line.join(' '));
+		//this._session.write('dbstop ' + func + ' ' + line);
+		let c = await this._sc.request('[1, 2; 3, 4]');
+		
+		console.log('return from set break point request:');
+		console.log(c);
+		console.log('end of request');
+		return [];
+		//return <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
 	}
 
 	/*
@@ -185,13 +174,6 @@ export class OctaveRuntime extends EventEmitter {
 	}
 
 	// private methods
-
-	private loadSource(file: string) {
-		if (this._sourceFile !== file) {
-			this._sourceFile = file;
-			this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
-		}
-	}
 
 	/**
 	 * Run through the file.
@@ -223,7 +205,7 @@ export class OctaveRuntime extends EventEmitter {
 	private verifyBreakpoints(path: string) : void {
 		let bps = this._breakPoints.get(path);
 		if (bps) {
-			this.loadSource(path);
+			// this.loadSource(path);
 			bps.forEach(bp => {
 				if (!bp.verified && bp.line < this._sourceLines.length) {
 					const srcLine = this._sourceLines[bp.line].trim();
