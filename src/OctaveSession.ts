@@ -14,7 +14,7 @@ export class OctaveDebuggerSession {
 			this.write = this.ErrFunc;
             return;
         }
-
+		session.on('exit', (code: number, signal: string) => console.log('debugger session exited with code ' + code + ' with signal ' + signal));
 		this.pid = session.pid;
 		this.stdin = session.stdin;
 		this.stdout = session.stdout;

@@ -15,8 +15,15 @@ export function isCompleteResponse(lines: string[], inDebugMode?: boolean): bool
     } else if (inDebugMode) {
         return isCompleteDebugResponse(lines);
     } else {
-        return isCompleteAnswerResponse(lines);
+        return isCompletePromptResponse(lines);
     }
+}
+
+export function isCompletePromptResponse(lines: string[]) {
+    const lastLine = lines[lines.length - 1];
+    const secondLastLine = lines[lines.length - 2];
+
+    return RX.octavePrompt.test(lastLine);
 }
 
 

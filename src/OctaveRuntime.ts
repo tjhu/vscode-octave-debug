@@ -62,13 +62,14 @@ export class OctaveRuntime extends EventEmitter {
 		let file = pathProperty.name;
 		this.file = file;
 
-
-		this._session = OctaveDebuggerSession.spawnSession(args.exec, [], { cwd: dir });
+		this._session = OctaveDebuggerSession.spawnSession(args.exec, ['--interactive', '--no-gui'], { cwd: dir });
 		console.log('spawn session with pid', this._session.pid);
 		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
 		this._sc.init(this._session.stdin, this._session.stdout);
-		this._session.write('debug_on_error(1)');
-		console.log(await this._sc.request('debug_on_error()'));
+		await this._sc.request();
+		console.log(1, await this._sc.request('debug_on_error(1)'));
+		console.log(2, await this._sc.request('debug_on_warning(1)'));
+		console.log(3, await this._sc.request('debug_on_interrupt(1)'));
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -79,7 +80,7 @@ export class OctaveRuntime extends EventEmitter {
 			console.error( `Error: Folder ${args.cwd} not found`);
 		}
 		
-		console.log('debugger is running in the background');
+		console.log('debugger is running in the background with pid', this._session.pid);
 	}
 
 	/**

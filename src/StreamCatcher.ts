@@ -48,7 +48,7 @@ export class StreamCatcher {
             const lines = data.split(/\r\n|\r|\n/);
 
             lines.forEach(line => this.buffer.push(line));
-            const commandIsDone = this.inDebugMode ? RH.isCompleteDebugResponse(this.buffer) : RH.isCompleteAnswerResponse(this.buffer);
+            const commandIsDone = RH.isCompleteResponse(this.buffer, this.inDebugMode);
 
             if (/\r\n|\r|\n$/.test(data) || commandIsDone) {
                 lastBuffer = '';

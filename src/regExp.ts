@@ -1,7 +1,7 @@
 // Copy and modify from https://github.com/raix/vscode-perl-debug
 export const noise = /\u001b\[([0-9]+)m|\u001b/g;
-export const debugPrompt = /^debug:\>$/;
-export const octavePrompt = /^octave:([0-9]+)\>$/;
+export const debugPrompt = /^debug:\>\s*$/;
+export const octavePrompt = /^octave:([0-9]+)\>\s*$/;
 export const emptyLine = /^$/;
 export const restartWarning = /^Warning: some settings and command-line options may be lost!/;
 
