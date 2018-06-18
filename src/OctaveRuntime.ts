@@ -64,7 +64,7 @@ export class OctaveRuntime extends EventEmitter {
 
 
 		this._session = OctaveDebuggerSession.spawnSession(args.exec, [], { cwd: dir });
-		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString());});
+		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
 		this._sc.init(this._session.stdin, this._session.stdout);
 
 		// Verify file and folder existence
@@ -173,7 +173,7 @@ export class OctaveRuntime extends EventEmitter {
 	 * Clear all breakpoints for file.
 	 */
 	public clearBreakpoints(path: string): void {
-		this._breakPoints.delete(path);
+		// this._breakPoints.delete(path);
 	}
 
 	// private methods

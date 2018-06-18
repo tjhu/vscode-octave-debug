@@ -149,7 +149,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// 	bp.id= id;
 		// 	return bp;
 		// });
-		let breakpoints = await this._runtime.setBreakPoints(func, clientLines);
+		let breakpoints = clientLines.length ? await this._runtime.setBreakPoints(func, clientLines) : [];
 
 		// send back the actual breakpoint positions
 		response.body = {
@@ -159,7 +159,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
-
+		console.log('threadsRequest received');
 		// runtime supports now threads so just return a default thread.
 		response.body = {
 			threads: [
@@ -170,26 +170,28 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+		console.log('stackTraceRequest received');
 
 		const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
 		const maxLevels = typeof args.levels === 'number' ? args.levels : 1000;
 		const endFrame = startFrame + maxLevels;
 
-		const stk = this._runtime.stack(startFrame, endFrame);
+		// const stk = this._runtime.stack(startFrame, endFrame);
 
 		response.body = {
-			stackFrames: stk[0].map(f => new StackFrame(f.index, f.name, this.createSource(f.file), this.convertDebuggerLineToClient(f.line))),
-			totalFrames: stk[1]
+			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame'}],
+			totalFrames: 1
 		};
 		this.sendResponse(response);
 	}
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
-
+		console.log('scopesRequest received');
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
-		scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
-		scopes.push(new Scope("Global", this._variableHandles.create("global"), true));
+		// scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
+		// scopes.push(new Scope("Global", this._variableHandles.create("global"), true));
+		scopes.push(new Scope("Visible", this._variableHandles.create("global")));
 
 		response.body = {
 			scopes: scopes
@@ -198,7 +200,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
-
+		console.log('variablesRequest received');
 		const variables = new Array<DebugProtocol.Variable>();
 		const id = this._variableHandles.get(args.variablesReference);
 		if (id !== null) {
