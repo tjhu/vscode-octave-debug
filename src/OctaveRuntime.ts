@@ -8,6 +8,7 @@ import * as Path from 'path';
 import * as Fs from 'fs';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
+import * as RH from './ResponseHelper';
 
 export interface OctaveBreakpoint {
 	id: number;
@@ -125,7 +126,7 @@ export class OctaveRuntime extends EventEmitter {
 	/*
 	 * Set breakpoint in file with given line.
 	 */
-	public async setBreakPoints(func: string, line: number[]) : Promise<OctaveBreakpoint[]> {
+	public async setBreakPoints(func: string, line: number[]) : Promise<DebugProtocol.Breakpoint[]> {
 
 		// const bp = <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
 		// let bps = this._breakPoints.get(path);
@@ -139,15 +140,17 @@ export class OctaveRuntime extends EventEmitter {
 
 
 		// Actual work
-		// let c = await this._sc.request('dbstop ' + func + ' ' + line.join(' '));
-		//this._session.write('dbstop ' + func + ' ' + line);
-		let c = await this._sc.request('[1, 2; 3, 4]');
+		let res = RH.getAnswers(await this._sc.request('dbstop ' + func + ' ' + line.join(' ')));
+		let breakpoints = res[0];
+		console.log('breakpoints of ' + func + ' are set to ' + breakpoints.join(' '));
+
 		
-		console.log('return from set break point request:');
-		console.log(c);
-		console.log('end of request');
-		return [];
-		//return <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
+		return breakpoints.map(line => 
+			<DebugProtocol.Breakpoint>{ 
+				id: this._breakpointId++, 
+				verified: false, 
+				line: line 
+			});
 	}
 
 	/*

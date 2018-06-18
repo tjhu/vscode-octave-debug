@@ -53,7 +53,7 @@ export class StreamCatcher {
             if (/\r\n|\r|\n$/.test(data) || commandIsDone) {
                 lastBuffer = '';
             } else {
-                let temp = lines.pop();
+                let temp = this.buffer.pop();
                 if (temp) {
                     lastBuffer = temp;
                 }
