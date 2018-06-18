@@ -6,10 +6,9 @@ import {
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
-import { OctaveRuntime, OctaveBreakpoint } from './OctaveRuntime';
+import { OctaveRuntime } from './OctaveRuntime';
 import * as Path from 'path';
-
-const { Subject } = require('await-notify');
+import { consoleLog } from './utils';
 
 
 /**
@@ -41,8 +40,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 	private _variableHandles = new Handles<string>();
 
-	private _configurationDone = new Subject();
-
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
 	 * We configure the default implementation of a debug adapter here.
@@ -50,7 +47,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	public constructor() {
 		super("octave-debug.txt");
 
-		console.log("Initializeing debug adapter");
+		consoleLog(1,"Initializeing debug adapter");
 		// this debugger uses one-based lines and columns
 		this.setDebuggerLinesStartAt1(true);
 		this.setDebuggerColumnsStartAt1(true);
@@ -70,9 +67,9 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this._runtime.on('stopOnException', () => {
 			this.sendEvent(new StoppedEvent('exception', OctaveDebugSession.THREAD_ID));
 		});
-		this._runtime.on('breakpointValidated', (bp: OctaveBreakpoint) => {
-			this.sendEvent(new BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
-		});
+		// this._runtime.on('breakpointValidated', (bp: OctaveBreakpoint) => {
+		// 	this.sendEvent(new BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
+		// });
 		this._runtime.on('output', (text: string, filePath: string, line: number, column: number) => {
 			const e: DebugProtocol.OutputEvent = new OutputEvent(`${text}\n`);
 			e.body.source = this.createSource(filePath);
@@ -90,7 +87,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * to interrogate the features the debug adapter provides.
 	 */
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-		console.log("initializeRequest received");
+		consoleLog(1,"initializeRequest received");
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
 
@@ -116,7 +113,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
-		console.log("launchRequest received.");
+		consoleLog(1,"launchRequest received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 		logger.log("setup");
@@ -134,7 +131,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments) {
-		console.log("setBreakPointsRequest received");
+		consoleLog(1,"setBreakPointsRequest received");
 		const path = <string>args.source.path;
 		const func = Path.parse(path).name;
 		const clientLines = args.lines || [];
@@ -159,7 +156,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
-		console.log('threadsRequest received');
+		consoleLog(1,'threadsRequest received');
 		// runtime supports now threads so just return a default thread.
 		response.body = {
 			threads: [
@@ -170,7 +167,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
-		console.log('stackTraceRequest received');
+		consoleLog(1,'stackTraceRequest received');
 
 		const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
 		const maxLevels = typeof args.levels === 'number' ? args.levels : 1000;
@@ -186,7 +183,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
-		console.log('scopesRequest received');
+		consoleLog(1,'scopesRequest received');
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
 		// scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
@@ -200,7 +197,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
-		console.log('variablesRequest received');
+		consoleLog(1,'variablesRequest received');
 		const variables = new Array<DebugProtocol.Variable>();
 		const id = this._variableHandles.get(args.variablesReference);
 		if (id !== null) {
@@ -256,7 +253,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
-		console.log('evaluateRequest received');
+		consoleLog(1,'evaluateRequest received');
 		let reply: string | undefined = undefined;
 
 		response.body = {

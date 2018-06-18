@@ -1,8 +1,9 @@
 import { spawn, ChildProcess } from 'child_process';
 import { Readable, Writable } from 'stream';
+import { consoleLog, consoleErr } from './utils';
 
 export class OctaveDebuggerSession {
-	private ErrFunc = () => { console.log('Octave runtime is being used before initialized'); };
+	private ErrFunc = () => { consoleErr('Octave runtime is being used before initialized'); };
 	public stdin = new Writable;
 	public stdout = new Readable;
 	public stderr = new Readable;
@@ -14,7 +15,7 @@ export class OctaveDebuggerSession {
 			this.write = this.ErrFunc;
             return;
         }
-		session.on('exit', (code: number, signal: string) => console.log('debugger session exited with code ' + code + ' with signal ' + signal));
+		session.on('exit', (code: number, signal: string) => consoleLog(1, 'debugger session exited with code ' + code + ' with signal ' + signal));
 		this.pid = session.pid;
 		this.stdin = session.stdin;
 		this.stdout = session.stdout;

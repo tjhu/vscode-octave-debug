@@ -1,9 +1,6 @@
-// Copy and modify from https://github.com/raix/vscode-perl-debug
-export const noise = /\u001b\[([0-9]+)m|\u001b/g;
 export const debugPrompt = /^debug:\>\s*$/;
 export const octavePrompt = /^octave:([0-9]+)\>\s*$/;
-export const emptyLine = /^$/;
-export const restartWarning = /^Warning: some settings and command-line options may be lost!/;
+
 
 export const breakPoint = {
 	// The condition my condition was in eg.:
@@ -17,31 +14,6 @@ export const breakPoint = {
 	ln: /^ ([0-9]+):/,
 };
 
-export function cleanLine(line: string) {
-	return line.replace(noise, '').replace(/\s|(\\b)/g, '').replace('\b', '');
-}
-
-export function isGarbageLine(line: string) {
-	return cleanLine(line) === '' || lastCommandLine.test(line);
-}
-
-export const lastCommandLine = {
-	// Improve this function... I think the test is the issue
-	test(line: string) {
-		const stripped = cleanLine(line);
-		// console.log(`${db.test(stripped)} DB: "${stripped}"`);
-
-		/*const chars = new Array([...stripped]);
-		console.log(`CHARS:`, chars);*/
-
-		return debugPrompt.test(stripped);
-	},
-
-	match(line: string) {
-		const stripped = cleanLine(line);
-		return stripped.match(debugPrompt);
-	}
-};
 
 export const fileMatch = /^[a-zA-Z]+::\(([a-zA-Z\._-]+):([0-9]+)\):/;
 

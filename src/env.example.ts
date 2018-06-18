@@ -1,0 +1,1 @@
+export let debugLevel = -1; // enable debug output by chosing a debugLevel that is at larger than 0

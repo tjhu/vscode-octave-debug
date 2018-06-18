@@ -9,19 +9,8 @@ import * as Fs from 'fs';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
 import * as RH from './ResponseHelper';
+import { consoleLog } from './utils';
 
-export interface OctaveBreakpoint {
-	id: number;
-	line: number;
-	verified: boolean;
-}
-
-export interface FakeStackFrame {
-	index: number;
-	name: string;
-	file: string;
-	line: number;
-}
 
 /**
  * A Octave runtime with minimal debugger functionality.
@@ -44,9 +33,6 @@ export class OctaveRuntime extends EventEmitter {
 	// This is the next line that will be 'executed'
 	private _currentLine = 0;
 
-	// maps from sourceFile to array of Octave breakpoints
-	private _breakPoints = new Map<string, OctaveBreakpoint[]>();
-
 	// since we want to send breakpoint events, we will assign an id to every event
 	// so that the frontend can match events with breakpoints.
 	private _breakpointId = 1;
@@ -63,13 +49,13 @@ export class OctaveRuntime extends EventEmitter {
 		this.file = file;
 
 		this._session = OctaveDebuggerSession.spawnSession(args.exec, ['--interactive', '--no-gui'], { cwd: dir });
-		console.log('spawn session with pid', this._session.pid);
-		this._session.stderr.on("data", (buffer) => {console.log("ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
+		consoleLog(1,'spawn session with pid', this._session.pid);
+		this._session.stderr.on("data", (buffer) => {consoleLog(1,"ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
 		this._sc.init(this._session.stdin, this._session.stdout);
 		await this._sc.request();
-		console.log(1, await this._sc.request('debug_on_error(1)'));
-		console.log(2, await this._sc.request('debug_on_warning(1)'));
-		console.log(3, await this._sc.request('debug_on_interrupt(1)'));
+		await this._sc.request('debug_on_error(1)');
+		await this._sc.request('debug_on_warning(1)');
+		await this._sc.request('debug_on_interrupt(1)');
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -80,7 +66,7 @@ export class OctaveRuntime extends EventEmitter {
 			console.error( `Error: Folder ${args.cwd} not found`);
 		}
 		
-		console.log('debugger is running in the background with pid', this._session.pid);
+		consoleLog(1,'debugger is running in the background with pid', this._session.pid);
 	}
 
 	/**
@@ -89,7 +75,7 @@ export class OctaveRuntime extends EventEmitter {
 	public start() {	
 		this._session.write(this.file);
 		this._sc.inDebugMode = true;
-		console.log('start debugging');
+		consoleLog(1,'start debugging');
 	}
 
 	/**
@@ -104,27 +90,6 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public step() {
 		this._session.write('dbnext');
-	}
-
-	/**
-	 * Returns a fake 'stacktrace' where every 'stackframe' is a word from the current line.
-	 */
-	public stack(startFrame: number, endFrame: number): [Array<FakeStackFrame>, number] {
-
-		const words = this._sourceLines[this._currentLine].trim().split(/\s+/);
-
-		const frames = new Array<FakeStackFrame>();
-		// every word of the current line becomes a stack frame.
-		for (let i = startFrame; i < Math.min(endFrame, words.length); i++) {
-			const name = words[i];	// use a word of the line as the stackframe name
-			frames.push({
-				index: i,
-				name: `${name}(${i})`,
-				file: this._sourceFile,
-				line: this._currentLine
-			});
-		}
-		return [frames, words.length];
 	}
 
 	/*
@@ -146,7 +111,7 @@ export class OctaveRuntime extends EventEmitter {
 		// Actual work
 		let res = RH.getAnswers(await this._sc.request('dbstop ' + func + ' ' + line.join(' ')));
 		let breakpoints = res[0];
-		console.log('breakpoints of ' + func + ' are set to ' + breakpoints.join(' '));
+		consoleLog(1,'breakpoints of ' + func + ' are set to ' + breakpoints.join(' '));
 
 		
 		return breakpoints.map(line => 
@@ -160,16 +125,7 @@ export class OctaveRuntime extends EventEmitter {
 	/*
 	 * Clear breakpoint in file with given line.
 	 */
-	public clearBreakPoint(path: string, line: number) : OctaveBreakpoint | undefined {
-		let bps = this._breakPoints.get(path);
-		if (bps) {
-			const index = bps.findIndex(bp => bp.line === line);
-			if (index >= 0) {
-				const bp = bps[index];
-				bps.splice(index, 1);
-				return bp;
-			}
-		}
+	public clearBreakPoint(path: string, line: number) {
 		return undefined;
 	}
 
@@ -209,32 +165,6 @@ export class OctaveRuntime extends EventEmitter {
 		}
 	}
 
-	private verifyBreakpoints(path: string) : void {
-		let bps = this._breakPoints.get(path);
-		if (bps) {
-			// this.loadSource(path);
-			bps.forEach(bp => {
-				if (!bp.verified && bp.line < this._sourceLines.length) {
-					const srcLine = this._sourceLines[bp.line].trim();
-
-					// if a line is empty or starts with '+' we don't allow to set a breakpoint but move the breakpoint down
-					if (srcLine.length === 0 || srcLine.indexOf('+') === 0) {
-						bp.line++;
-					}
-					// if a line starts with '-' we don't allow to set a breakpoint but move the breakpoint up
-					if (srcLine.indexOf('-') === 0) {
-						bp.line--;
-					}
-					// don't set 'verified' to true if the line contains the word 'lazy'
-					// in this case the breakpoint will be verified 'lazy' after hitting it once.
-					if (srcLine.indexOf('lazy') < 0) {
-						bp.verified = true;
-						this.sendEvent('breakpointValidated', bp);
-					}
-				}
-			});
-		}
-	}
 	
 	public getVariables() {
 		this._sc.request('whos');
@@ -271,23 +201,23 @@ export class OctaveRuntime extends EventEmitter {
 		}
 
 		// is there a breakpoint?
-		const breakpoints = this._breakPoints.get(this._sourceFile);
-		if (breakpoints) {
-			const bps = breakpoints.filter(bp => bp.line === ln);
-			if (bps.length > 0) {
+		// const breakpoints = this._breakPoints.get(this._sourceFile);
+		// if (breakpoints) {
+		// 	const bps = breakpoints.filter(bp => bp.line === ln);
+		// 	if (bps.length > 0) {
 
-				// send 'stopped' event
-				this.sendEvent('stopOnBreakpoint');
+		// 		// send 'stopped' event
+		// 		this.sendEvent('stopOnBreakpoint');
 
-				// the following shows the use of 'breakpoint' events to update properties of a breakpoint in the UI
-				// if breakpoint is not yet verified, verify it now and send a 'breakpoint' update event
-				if (!bps[0].verified) {
-					bps[0].verified = true;
-					this.sendEvent('breakpointValidated', bps[0]);
-				}
-				return true;
-			}
-		}
+		// 		// the following shows the use of 'breakpoint' events to update properties of a breakpoint in the UI
+		// 		// if breakpoint is not yet verified, verify it now and send a 'breakpoint' update event
+		// 		if (!bps[0].verified) {
+		// 			bps[0].verified = true;
+		// 			this.sendEvent('breakpointValidated', bps[0]);
+		// 		}
+		// 		return true;
+		// 	}
+		// }
 
 		// non-empty line
 		if (stepEvent && line.length > 0) {

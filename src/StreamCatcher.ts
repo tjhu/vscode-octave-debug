@@ -9,6 +9,7 @@
 import { Writable, Readable } from 'stream';
 import * as RX from './RegExp';
 import * as RH from './ResponseHelper';
+import { consoleLog } from './utils';
 
 interface RequestTask {
     command?: string;
@@ -17,7 +18,6 @@ interface RequestTask {
 }
 
 export class StreamCatcher {
-    public debug: boolean = true;
     private requestQueue: RequestTask[] = [];
     private requestRunning?: RequestTask= undefined;
 
@@ -36,14 +36,13 @@ export class StreamCatcher {
 
     public init(input: Writable, output: Readable) {
         this.input = input;
+        
 
         let lastBuffer = '';
 
         output.on('data', (buffer) => {
-            if (this.debug) {
-                console.log(buffer);
-                console.log('RAW:', buffer.toString());
-            }
+            consoleLog(4, buffer);
+            consoleLog(4, 'RAW:', buffer.toString());
             const data = lastBuffer + buffer.toString();
             const lines = data.split(/\r\n|\r|\n/);
 
@@ -64,31 +63,14 @@ export class StreamCatcher {
                 this.buffer = [];
                 // xxx: We might want to verify the DB nr and the cmd number
                 this.resolveRequest(data);
+                consoleLog(4, 'complete response from octave debugger', data);
             } 
         });
         output.on('close', () => {
-            console.log('debugger stdout is closed');
+            consoleLog(1, 'debugger stdout is closed');
         });
     }
 
-    public readline(line: string) {
-        if (this.debug) {
-            console.log('line:', line);
-        } 
-        
-        this.buffer.push(line);
-        // Test for command end
-        let commandEnd: boolean = false;
-        if (RX.lastCommandLine.test(line) || (!this.inDebugMode && RX.emptyLine.test(line))) {
-            if (this.debug) {
-                console.log('END:', line);
-            }
-            const data = this.buffer;
-            this.buffer = [];
-            // xxx: We might want to verify the DB nr and the cmd number
-            this.resolveRequest(data);
-        }
-    }
 
     public resolveRequest(data: string[]) {
         const req = this.requestRunning;
@@ -120,9 +102,8 @@ export class StreamCatcher {
     }
 
     public request(command?: string): Promise<string[]> {
-        if (this.debug) {
-            console.log(command ? `CMD: "${command}"` : 'REQ-INIT');
-        }
+        consoleLog(4, command ? `CMD: "${command}"` : 'REQ-INIT');
+
         return new Promise((resolve, reject) => {
             // Add our request to the queue
             this.requestQueue.push({
