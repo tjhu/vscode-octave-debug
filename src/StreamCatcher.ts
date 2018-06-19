@@ -63,7 +63,7 @@ export class StreamCatcher {
                 this.buffer = [];
                 // xxx: We might want to verify the DB nr and the cmd number
                 this.resolveRequest(data);
-                consoleLog(4, 'complete response from octave debugger', data);
+                consoleLog(2, 'complete response from octave debugger', data);
             } 
         });
         output.on('close', () => {

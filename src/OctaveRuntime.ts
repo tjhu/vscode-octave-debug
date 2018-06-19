@@ -9,7 +9,7 @@ import * as Fs from 'fs';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
 import * as RH from './ResponseHelper';
-import { consoleLog } from './utils';
+import { consoleLog, consoleErr } from './utils';
 
 
 /**
@@ -103,8 +103,12 @@ export class OctaveRuntime extends EventEmitter {
 		}
 
 		let lines = await this._sc.request('dbstop ' + func + ' ' + line.join(' '));
+		if (!RH.isAnswerResponse) {
+			consoleErr('expect lines contain an answer');
+			return [];
+		}
 		let res = RH.getAnswers(lines);
-		let breakpoints = res[0];
+		let breakpoints = res[0].map(Number);
 		consoleLog(1,'breakpoints of ' + func + ' are set to ' + breakpoints.join(' '));
 
 		return breakpoints.map(line => 

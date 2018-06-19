@@ -21,28 +21,21 @@ export function isCompleteResponse(lines: string[], inDebugMode?: boolean): bool
 
 export function isCompletePromptResponse(lines: string[]) {
     const lastLine = lines[lines.length - 1];
-    const secondLastLine = lines[lines.length - 2];
-
     return RX.octavePrompt.test(lastLine);
 }
-
 
 /**
  * Check if lines is a complete debug response that ends with "debug:>"
  */
 export function isCompleteDebugResponse(lines: string[]) {
     const lastLine = lines[lines.length - 1];
-    const secondLastLine = lines[lines.length - 2];
-
-    return RX.debugPrompt.test(secondLastLine) &&
-        lastLine === '';
+    return RX.debugPrompt.test(lastLine);
 }
-
 
 /**
  * Check if lines is a complete answer response that starts with "ans = "
  */
-export function isCompleteAnswerResponse(lines: string[]) {
+export function isAnswerResponse(lines: string[]) {
     return isSingleAnswerRespnse(lines) || isMultipleAnswerResponse(lines);
 }
 
@@ -52,14 +45,14 @@ export function isCompleteAnswerResponse(lines: string[]) {
 export function isSingleAnswerRespnse(lines: string[]) {
     const firstLine = splitByWhiteSpaces(lines[0]);
 
-    return firstLine.length === 3 && /* first line must be in 'ans = $_' format */
+    return firstLine.length === 3 && /* first line must be in '$varName = $varVal' format */
         firstLine[0] === 'ans' &&
         firstLine[1] === '=' &&
         lines.length === 2; /* must only follow by a prompt */
 }
 
 /**
- * Check to see if lines is ['ans =', ... , '', prompt]
+ * Check to see if lines is ['$varName =', ...$varVals , '', prompt]
  */
 export function isMultipleAnswerResponse(lines: string[]) {
     const firstLine = splitByWhiteSpaces(lines[0]);
@@ -71,25 +64,25 @@ export function isMultipleAnswerResponse(lines: string[]) {
         lines[lines.length - 1] === '';
 }
 
-function getSingleAnswer_Number(lines: string[]) {
-    return Number(splitByWhiteSpaces(lines[0][2]));
+function getSingleAnswer(lines: string[]) {
+    return splitByWhiteSpaces(lines[0])[2];
 }
 
-function getMultipleAnswers_Number(lines: string[]) {
+function getMultipleAnswers(lines: string[]) {
     const data = lines.slice(3, lines.length - 3);
-    let answers: Number[][] = [];
+    let answers: string[][] = [];
     for (let line of data) {
         let entries = splitByWhiteSpaces(line);
-        answers.push(entries.map(Number));
+        answers.push(entries);
     }
     return answers;
 }
 
-export function getAnswers(lines: string[]): Number[][] {
+export function getAnswers(lines: string[]): string[][] {
     if (isSingleAnswerRespnse(lines)) {
-        return [[getSingleAnswer_Number(lines)]];
+        return [[getSingleAnswer(lines)]];
     } else if (isMultipleAnswerResponse(lines)) {
-        return getMultipleAnswers_Number(lines);
+        return getMultipleAnswers(lines);
     } else {
         return [];
     }

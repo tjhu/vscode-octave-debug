@@ -29,7 +29,7 @@ This extension contributes the following settings:
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+* three or above dimensional(3D+) variables are not supported
 
 ## Release Notes
 
@@ -47,6 +47,11 @@ Fixed issue #.
 
 Added features X, Y, and Z.
 
+## Future work
+
+* Add support for all data type (only support string currently).
+
 ### Reference
+
 * [Microsoft/vscode-mock-debug](https://github.com/Microsoft/vscode-mock-debug) for the template
 * [raix/vscode-perl-debug](https://github.com/raix/vscode-perl-debug) for ideas
