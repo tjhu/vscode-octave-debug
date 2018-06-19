@@ -52,7 +52,9 @@ export class OctaveRuntime extends EventEmitter {
 		consoleLog(1,'spawn session with pid', this._session.pid);
 		this._session.stderr.on("data", (buffer) => {consoleLog(1,"ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
 		this._sc.init(this._session.stdin, this._session.stdout);
+		// Flush initial output
 		await this._sc.request();
+		// Set debug_on_XX to true
 		await this._sc.request('debug_on_error(1)');
 		await this._sc.request('debug_on_warning(1)');
 		await this._sc.request('debug_on_interrupt(1)');
@@ -96,24 +98,15 @@ export class OctaveRuntime extends EventEmitter {
 	 * Set breakpoint in file with given line.
 	 */
 	public async setBreakPoints(func: string, line: number[]) : Promise<DebugProtocol.Breakpoint[]> {
+		if (line.length === 0) {
+			return [];
+		}
 
-		// const bp = <OctaveBreakpoint> { verified: false, line, id: this._breakpointId++ };
-		// let bps = this._breakPoints.get(path);
-		// if (!bps) {
-		// 	bps = new Array<OctaveBreakpoint>();
-		// 	this._breakPoints.set(path, bps);
-		// }
-		// bps.push(bp);
-
-		// this.verifyBreakpoints(path);
-
-
-		// Actual work
-		let res = RH.getAnswers(await this._sc.request('dbstop ' + func + ' ' + line.join(' ')));
+		let lines = await this._sc.request('dbstop ' + func + ' ' + line.join(' '));
+		let res = RH.getAnswers(lines);
 		let breakpoints = res[0];
 		consoleLog(1,'breakpoints of ' + func + ' are set to ' + breakpoints.join(' '));
 
-		
 		return breakpoints.map(line => 
 			<DebugProtocol.Breakpoint>{ 
 				id: this._breakpointId++, 

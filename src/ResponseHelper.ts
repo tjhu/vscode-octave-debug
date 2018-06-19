@@ -47,41 +47,39 @@ export function isCompleteAnswerResponse(lines: string[]) {
 }
 
 /**
- * Check to see if lines is ['ans = $_', '']
+ * Check to see if lines is ['ans = $_', prompt]
  */
 export function isSingleAnswerRespnse(lines: string[]) {
-    const firstLine = split(lines[0]);
+    const firstLine = splitByWhiteSpaces(lines[0]);
 
     return firstLine.length === 3 && /* first line must be in 'ans = $_' format */
         firstLine[0] === 'ans' &&
         firstLine[1] === '=' &&
-        lines.length === 2 && /* must have only one trailing empty line */
-        lines[1] === '';
+        lines.length === 2; /* must only follow by a prompt */
 }
 
 /**
- * Check to see if lines is ['ans =', ... , '', '']
+ * Check to see if lines is ['ans =', ... , '', prompt]
  */
 export function isMultipleAnswerResponse(lines: string[]) {
-    const firstLine = split(lines[0]);
+    const firstLine = splitByWhiteSpaces(lines[0]);
 
     return firstLine.length === 2 && /* first line must be in 'ans =' format */
         firstLine[0] === 'ans' &&
         firstLine[1] === '=' &&
-        lines.length > 3 && /* must have only two trailing empty line */
-        lines[lines.length - 1] === '' && 
-        lines[lines.length - 2] === '';
+        lines.length > 3 && /* must have only one trailing empty line follows by prompt */
+        lines[lines.length - 1] === '';
 }
 
 function getSingleAnswer_Number(lines: string[]) {
-    return Number(lines[0].split(/\s/)[2]);
+    return Number(splitByWhiteSpaces(lines[0][2]));
 }
 
 function getMultipleAnswers_Number(lines: string[]) {
-    const data = lines.slice(3, lines.length - 2);
+    const data = lines.slice(3, lines.length - 3);
     let answers: Number[][] = [];
     for (let line of data) {
-        let entries = split(line);
+        let entries = splitByWhiteSpaces(line);
         answers.push(entries.map(Number));
     }
     return answers;
@@ -99,6 +97,6 @@ export function getAnswers(lines: string[]): Number[][] {
 
 
 // Helpers
-function split(str: string) {
-    return str.split(/\s/).filter(s => s !== '');
+function splitByWhiteSpaces(str: string) {
+    return str.split(/\s+/);
 }
