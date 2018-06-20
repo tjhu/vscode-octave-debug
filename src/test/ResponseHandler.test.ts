@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as RH from '../ResponseHelper';
 
 const lines0 = ["ans =  7", "octave:5> "];
-const lines1 = ["ans =  7", "debug:> "];
+const lines1 = ["ans =  7", "debug> "];
 
 suite("isCompleteResponse", function () {
     test("#isCompleteResponse 1", function() {

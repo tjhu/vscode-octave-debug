@@ -1,5 +1,12 @@
-export const debugPrompt = /^debug:\>\s*$/;
+export const debugPrompt = /^debug\>\s*$/;
 export const octavePrompt = /^octave:([0-9]+)\>\s*$/;
+
+
+export const stopMessage = {
+	firstLine: /^stopped in (.+) at line (\d+)$/,
+	secondLine: /^(\d+): .+$/,
+	thirdLine: /^\s*$/
+};
 
 
 export const breakPoint = {
@@ -14,16 +21,3 @@ export const breakPoint = {
 	ln: /^ ([0-9]+):/,
 };
 
-
-export const fileMatch = /^[a-zA-Z]+::\(([a-zA-Z\._-]+):([0-9]+)\):/;
-
-export const fileMatchException = /at ([a-zA-Z\._-]+) line ([0-9]+)\./;
-
-export const codeErrorSyntax = /^syntax error at (\S+) line ([0-9]+), near ([\S|\s]+)/;
-
-export const codeErrorRuntime = /([\S|\s]+) at (\S+) line ([0-9]+)\.$/;
-
-// EG. PadWalker for scope investigation
-export const codeErrorMissingModule = /^(\S+) module not found - please install$/;
-
-export const debuggerSignature = /^  DB<[0-9]+> $/;

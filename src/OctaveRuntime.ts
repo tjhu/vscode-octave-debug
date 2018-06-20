@@ -10,6 +10,7 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
 import * as RH from './ResponseHelper';
 import { consoleLog, consoleErr } from './utils';
+import { spawn, ChildProcess } from 'child_process';
 
 
 /**
@@ -17,7 +18,6 @@ import { consoleLog, consoleErr } from './utils';
  */
 export class OctaveRuntime extends EventEmitter {
 
-	private _session: OctaveDebuggerSession = OctaveDebuggerSession.getDummySession();
 	private _sc: StreamCatcher = new StreamCatcher();
 
 	// the initial (and one and only) file we are 'debugging'
@@ -48,10 +48,17 @@ export class OctaveRuntime extends EventEmitter {
 		let file = pathProperty.name;
 		this.file = file;
 
-		this._session = OctaveDebuggerSession.spawnSession(args.exec, ['--interactive', '--no-gui'], { cwd: dir });
-		consoleLog(1,'spawn session with pid', this._session.pid);
-		this._session.stderr.on("data", (buffer) => {consoleLog(1,"ERR: " + buffer.toString()); this.sendEvent('stopOnBreakpoint');});
-		this._sc.init(this._session.stdin, this._session.stdout);
+		let session: ChildProcess;
+		{
+			const exec = args.exec || 'octave-cli';
+			const argv = ['--interactive', '--no-gui'];
+			const spawnOption = { cwd: dir };
+			session = spawn(exec, argv, spawnOption);
+		}
+		
+
+		consoleLog(1,'spawn session with pid', session.pid);
+		this._sc.init(session.stdin, session.stdout, session.stderr, this.resolveErrorMessage);
 		// Flush initial output
 		await this._sc.request();
 		// Set debug_on_XX to true
@@ -68,15 +75,16 @@ export class OctaveRuntime extends EventEmitter {
 			console.error( `Error: Folder ${args.cwd} not found`);
 		}
 		
-		consoleLog(1,'debugger is running in the background with pid', this._session.pid);
+		consoleLog(1,'debugger is running in the background with pid', session.pid);
 	}
 
 	/**
 	 * Start executing the given program.
 	 */
-	public start() {	
-		this._session.write(this.file);
+	public async start() {	
 		this._sc.inDebugMode = true;
+		await this._sc.request(this.file);
+		
 		consoleLog(1,'start debugging');
 	}
 
@@ -84,14 +92,14 @@ export class OctaveRuntime extends EventEmitter {
 	 * Continue execution to the end/beginning.
 	 */
 	public continue(reverse = false) {
-		this.run(reverse, undefined);
+		
 	}
 
 	/**
-	 * Step to the next/previous non empty line.
+	 * Step to the next non empty line.
 	 */
-	public step() {
-		this._session.write('dbnext');
+	public async step() {
+		await this._sc.request('dbnext');
 	}
 
 	/*
@@ -133,97 +141,14 @@ export class OctaveRuntime extends EventEmitter {
 		// this._breakPoints.delete(path);
 	}
 
-	// private methods
-
-	/**
-	 * Run through the file.
-	 * If stepEvent is specified only run a single step and emit the stepEvent.
-	 */
-	private run(reverse = false, stepEvent?: string) {
-		if (reverse) {
-			for (let ln = this._currentLine-1; ln >= 0; ln--) {
-				if (this.fireEventsForLine(ln, stepEvent)) {
-					this._currentLine = ln;
-					return;
-				}
-			}
-			// no more lines: stop at first line
-			this._currentLine = 0;
-			this.sendEvent('stopOnEntry');
-		} else {
-			for (let ln = this._currentLine+1; ln < this._sourceLines.length; ln++) {
-				if (this.fireEventsForLine(ln, stepEvent)) {
-					this._currentLine = ln;
-					return true;
-				}
-			}
-			// no more lines: run to end
-			this.sendEvent('end');
-		}
-	}
-
-	
 	public getVariables() {
 		this._sc.request('whos');
 		return Array<DebugProtocol.Variable>();
 	}
 
-	private writeToSession(str: string) {
-
-	}
-
-	private writeToSessionAndGetResponse(str: string) {
-		this.writeToSession(str);
-	}
-
-
-	/**
-	 * Fire events if line has a breakpoint or the word 'exception' is found.
-	 * Returns true is execution needs to stop.
-	 */
-	private fireEventsForLine(ln: number, stepEvent?: string): boolean {
-
-		const line = this._sourceLines[ln].trim();
-
-		// if 'log(...)' found in source -> send argument to debug console
-		const matches = /log\((.*)\)/.exec(line);
-		if (matches && matches.length === 2) {
-			this.sendEvent('output', matches[1], this._sourceFile, ln, matches.index);
-		}
-
-		// if word 'exception' found in source -> throw exception
-		if (line.indexOf('exception') >= 0) {
-			this.sendEvent('stopOnException');
-			return true;
-		}
-
-		// is there a breakpoint?
-		// const breakpoints = this._breakPoints.get(this._sourceFile);
-		// if (breakpoints) {
-		// 	const bps = breakpoints.filter(bp => bp.line === ln);
-		// 	if (bps.length > 0) {
-
-		// 		// send 'stopped' event
-		// 		this.sendEvent('stopOnBreakpoint');
-
-		// 		// the following shows the use of 'breakpoint' events to update properties of a breakpoint in the UI
-		// 		// if breakpoint is not yet verified, verify it now and send a 'breakpoint' update event
-		// 		if (!bps[0].verified) {
-		// 			bps[0].verified = true;
-		// 			this.sendEvent('breakpointValidated', bps[0]);
-		// 		}
-		// 		return true;
-		// 	}
-		// }
-
-		// non-empty line
-		if (stepEvent && line.length > 0) {
-			this.sendEvent(stepEvent);
-			return true;
-		}
-
-		// nothing interesting found -> continue
-		return false;
+	// private methods
+	private resolveErrorMessage(lines: string[]) {
+		consoleLog(1, 'helo boi');
 	}
 
 

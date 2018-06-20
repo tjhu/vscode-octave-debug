@@ -104,12 +104,11 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * Called at the end of the configuration sequence.
 	 * Indicates that all breakpoints etc. have been sent to the DA and that the 'launch' can start.
 	 */
-	protected configurationDoneRequest(response: DebugProtocol.ConfigurationDoneResponse, args: DebugProtocol.ConfigurationDoneArguments): void {
+	protected async configurationDoneRequest(response: DebugProtocol.ConfigurationDoneResponse, args: DebugProtocol.ConfigurationDoneArguments) {
 		super.configurationDoneRequest(response, args);
 
 		// run the program
-		this._runtime.start();
-		
+		await this._runtime.start();
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
@@ -118,7 +117,6 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 		logger.log("setup");
 
-		
 		// start debugger in the runtime
 		await this._runtime.initialize(args);
 
@@ -139,13 +137,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// clear all breakpoints for this file
 		this._runtime.clearBreakpoints(path);
 
-		// set and verify breakpoint locations
-		// const actualBreakpoints = clientLines.map(l => {
-		// 	let { verified, line, id } = this._runtime.setBreakPoint(func, this.convertClientLineToDebugger(l));
-		// 	const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
-		// 	bp.id= id;
-		// 	return bp;
-		// });
+		// set breakpoint locations
 		let breakpoints = clientLines.length ? await this._runtime.setBreakPoints(func, clientLines) : [];
 
 		// send back the actual breakpoint positions
@@ -155,7 +147,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
+	protected async threadsRequest(response: DebugProtocol.ThreadsResponse) {
 		consoleLog(1,'threadsRequest received');
 		// runtime supports now threads so just return a default thread.
 		response.body = {
@@ -166,7 +158,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+	protected async stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments) {
 		consoleLog(1,'stackTraceRequest received');
 
 		const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
@@ -176,13 +168,13 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		// const stk = this._runtime.stack(startFrame, endFrame);
 
 		response.body = {
-			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: 'fuck', line: 10, column: 3}],
+			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: 'fuck', line: 1, column: 3}],
 			totalFrames: 1
 		};
 		this.sendResponse(response);
 	}
 
-	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+	protected async scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments) {
 		consoleLog(1,'scopesRequest received');
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
@@ -196,7 +188,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+	protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments) {
 		consoleLog(1,'variablesRequest received');
 		const variables = new Array<DebugProtocol.Variable>();
 		const id = this._variableHandles.get(args.variablesReference);
@@ -233,22 +225,13 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments): void {
+	protected async continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments) {
 		this._runtime.continue();
 		this.sendResponse(response);
 	}
 
-	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments) : void {
-		this._runtime.continue(true);
-		this.sendResponse(response);
- 	}
-
-	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
-		this._runtime.step();
-		this.sendResponse(response);
-	}
-
-	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
+	protected async nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments) {
+		await this._runtime.step();
 		this.sendResponse(response);
 	}
 

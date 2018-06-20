@@ -1,7 +1,7 @@
 /**
- * Helper for parsing response from debug rumtime from stdio
+ * Helper for parsing response from debug rumtime from stdout
  */
- import * as RX from './RegExp';
+import * as RX from './RegExp';
 
 /**
  * Check if lines is a complete response from debug
@@ -19,13 +19,16 @@ export function isCompleteResponse(lines: string[], inDebugMode?: boolean): bool
     }
 }
 
+/**
+ * Check if lines is a complete debug response that ends with "octave:1>"
+ */
 export function isCompletePromptResponse(lines: string[]) {
     const lastLine = lines[lines.length - 1];
     return RX.octavePrompt.test(lastLine);
 }
 
 /**
- * Check if lines is a complete debug response that ends with "debug:>"
+ * Check if lines is a complete debug response that ends with "debug>"
  */
 export function isCompleteDebugResponse(lines: string[]) {
     const lastLine = lines[lines.length - 1];
