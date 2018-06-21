@@ -27,11 +27,6 @@ export class StreamCatcher {
 
     public inDebugMode: boolean = false;
 
-    // xxx: consider removing ready - the user should not have to care about that...
-    public ready: boolean = false;
-    private readyListeners: Function[] = [];
-    private readyResponse: string[] = [];
-
     public stdin: Writable = new Writable;
 
     constructor() {}
@@ -142,24 +137,5 @@ export class StreamCatcher {
 
             this.nextRequest();
         });
-    }
-
-    public onReady(f: fLineHandler) {
-        if (this.ready) {
-            f(this.readyResponse);
-        } else {
-            this.readyListeners.push(f);
-        }
-    }
-
-    public isReady(): Promise<string[]> {
-        // return new Promise(resolve => this.onReady(res: => resolve(res)));
-        return new Promise((resolve, reject) =>  {
-            this.onReady(res => resolve(res));
-        });
-    }
-
-    public destroy() {
-        return Promise.resolve();
     }
 }

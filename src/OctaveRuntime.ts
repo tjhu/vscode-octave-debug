@@ -43,7 +43,6 @@ export class OctaveRuntime extends EventEmitter {
 
 	constructor() {
 		super();
-		this.on('stopOnBreakpoint', () => console.error('fuyck u b'));
 	}
 
 	public async initialize(args: LaunchRequestArguments) {
@@ -62,7 +61,7 @@ export class OctaveRuntime extends EventEmitter {
 		
 
 		consoleLog(1,'spawn session with pid', session.pid);
-		this._sc.init(session.stdin, session.stdout, session.stderr, this.resolveErrorMessage);
+		this._sc.init(session.stdin, session.stdout, session.stderr, (lines: string[]) => this.resolveErrorMessage(lines));
 		// Flush initial output
 		await this._sc.request();
 		// Set debug_on_XX to true
