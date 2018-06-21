@@ -165,10 +165,10 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		const maxLevels = typeof args.levels === 'number' ? args.levels : 1000;
 		const endFrame = startFrame + maxLevels;
 
-		// const stk = this._runtime.stack(startFrame, endFrame);
+		// const stackFrames = this._runtime.getStackFrames();
 
 		response.body = {
-			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: 'fuck', line: 1, column: 3}],
+			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: this.createSource('fuck.m'), line: 1, column: 3}],
 			totalFrames: 1
 		};
 		this.sendResponse(response);

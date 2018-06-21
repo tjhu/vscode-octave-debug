@@ -9,6 +9,7 @@ import * as Fs from 'fs';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
 import * as RH from './ResponseHelper';
+import * as EH from './ErrorMessageHelper';
 import { consoleLog, consoleErr } from './utils';
 import { spawn, ChildProcess } from 'child_process';
 
@@ -37,9 +38,12 @@ export class OctaveRuntime extends EventEmitter {
 	// so that the frontend can match events with breakpoints.
 	private _breakpointId = 1;
 
+	private _stackFrames: DebugProtocol.StackFrame[] = [];
+
 
 	constructor() {
 		super();
+		this.on('stopOnBreakpoint', () => console.error('fuyck u b'));
 	}
 
 	public async initialize(args: LaunchRequestArguments) {
@@ -83,7 +87,7 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public async start() {	
 		this._sc.inDebugMode = true;
-		await this._sc.request(this.file);
+		this._sc.request(this.file);
 		
 		consoleLog(1,'start debugging');
 	}
@@ -91,7 +95,7 @@ export class OctaveRuntime extends EventEmitter {
 	/**
 	 * Continue execution to the end/beginning.
 	 */
-	public continue(reverse = false) {
+	public continue() {
 		
 	}
 
@@ -122,7 +126,7 @@ export class OctaveRuntime extends EventEmitter {
 		return breakpoints.map(line => 
 			<DebugProtocol.Breakpoint>{ 
 				id: this._breakpointId++, 
-				verified: false, 
+				verified: true, 
 				line: line 
 			});
 	}
@@ -141,6 +145,10 @@ export class OctaveRuntime extends EventEmitter {
 		// this._breakPoints.delete(path);
 	}
 
+	public getStackFrames() {
+		return this._stackFrames;
+	}
+
 	public getVariables() {
 		this._sc.request('whos');
 		return Array<DebugProtocol.Variable>();
@@ -148,8 +156,10 @@ export class OctaveRuntime extends EventEmitter {
 
 	// private methods
 	private resolveErrorMessage(lines: string[]) {
-		consoleLog(1, 'helo boi');
+		// this._stackFrames = EH.getStackFrames(lines);
+		this.sendEvent('stopOnBreakpoint');
 	}
+
 
 
 
