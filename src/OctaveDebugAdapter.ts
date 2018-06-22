@@ -2,13 +2,14 @@ import {
 	Logger, logger,
 	LoggingDebugSession,
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
-	Thread, StackFrame, Scope, Source, Handles, Breakpoint
+	Thread, StackFrame, Scope, Source, Handles, Breakpoint, Variable
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { OctaveRuntime } from './OctaveRuntime';
 import * as Path from 'path';
-import { consoleLog } from './utils';
+import { consoleLog, consoleErr } from './utils';
+import { VariableFromWhosRequest } from './ResponseHelper';
 
 
 /**
@@ -39,6 +40,9 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	private _runtime: OctaveRuntime;
 
 	private _variableHandles = new Handles<string>();
+
+	private _varaibles: Variable[] = [];
+	private _variablesWithTypes: { [name: string]: VariableFromWhosRequest } = {};
 
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
@@ -95,6 +99,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		response.body.supportsConfigurationDoneRequest = true;
 
 		// make VS Code to use 'evaluate' when hovering over source
+		// TODO: maybe support this in the future
 		response.body.supportsEvaluateForHovers = true;
 
 		this.sendResponse(response);
@@ -114,8 +119,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
 		consoleLog(1, "launchRequest received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
-		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-		logger.log("setup");
+		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Log, false);
 
 		// start debugger in the runtime
 		await this._runtime.initialize(args);
@@ -197,9 +201,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		consoleLog(1, 'scopesRequest received');
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
-		// scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
-		// scopes.push(new Scope("Global", this._variableHandles.create("global"), true));
-		scopes.push(new Scope("Visible", this._variableHandles.create("global")));
+		scopes.push(new Scope("Variales", this._variableHandles.create(":!frame")));
 
 		response.body = {
 			scopes: scopes
@@ -210,38 +212,34 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments) {
 		consoleLog(1, 'variablesRequest received');
 		const variables = new Array<DebugProtocol.Variable>();
-		const id = this._variableHandles.get(args.variablesReference);
-		if (id !== null) {
-			variables.push({
-				name: id + "_i",
-				type: "integer",
-				value: "123",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_f",
-				type: "float",
-				value: "3.14",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_s",
-				type: "string",
-				value: "hello world",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_o",
-				type: "object",
-				value: "Object",
-				variablesReference: this._variableHandles.create("object_")
-			});
-		}
+		const variableName: string = this._variableHandles.get(args.variablesReference);
 
+		if (variableName === ':!frame') {
+			const variableWithTypes = await this._runtime.getListOfVariables();
+			for(let vari of variableWithTypes) {
+				let variable;
+				if(variable = await this._runtime.getValueofVariable(vari)) {
+					variables.push(variable);
+				}
+			}
+
+			this._varaibles = variables;
+			this._variablesWithTypes = {};
+			for(let v of variableWithTypes) {
+				this._variablesWithTypes[v.name] = v;
+			}
+		} else {
+			// TODO: For future when we support displaying array
+			// if variableName not in this._varaibles:
+			// 	this._varaibles[variableName] = await this._runtime.getValueofVariable(variableName)
+			// variables.push(this._varaibles[variableName])
+			consoleErr('We should not look for variable name: ' + variableName);
+		}
 		response.body = {
 			variables: variables
 		};
 		this.sendResponse(response);
+		
 	}
 
 	protected async continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments) {
@@ -256,12 +254,16 @@ export class OctaveDebugSession extends LoggingDebugSession {
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 		consoleLog(1, 'evaluateRequest received');
-		let reply: string | undefined = undefined;
-
-		response.body = {
-			result: reply ? reply : `evaluate(context: '${args.context}', '${args.expression}')`,
-			variablesReference: 0
-		};
+		
+		// TODO: why not asking octave runtime about what the hell that expression is?
+		if(args.expression in this._variablesWithTypes) {
+			let v = this._variablesWithTypes[args.expression]
+			response.body = {
+				result:  v.size.join('x') + ' ' + v.class,
+				variablesReference: 0
+			};
+		}
+		
 		this.sendResponse(response);
 	}
 

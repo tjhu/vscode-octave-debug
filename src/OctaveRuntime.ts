@@ -13,6 +13,7 @@ import * as EH from './ErrorMessageHelper';
 import { consoleLog, consoleErr } from './utils';
 import { spawn, ChildProcess } from 'child_process';
 import { debugPrompt } from './RegExp';
+import { logger, Variable } from 'vscode-debugadapter';
 
 
 export interface OctaveStackFrame {
@@ -78,6 +79,8 @@ export class OctaveRuntime extends EventEmitter {
 		await this._sc.request('debug_on_error(1)');
 		await this._sc.request('debug_on_warning(1)');
 		await this._sc.request('debug_on_interrupt(1)');
+		// Remove blank lines
+		await this._sc.request('format compact');
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -102,7 +105,7 @@ export class OctaveRuntime extends EventEmitter {
 	}
 
 	/**
-	 * Continue execution to the end/beginning.
+	 * Continue execution to the end
 	 */
 	public continue() {
 		
@@ -158,17 +161,28 @@ export class OctaveRuntime extends EventEmitter {
 		return this._stackFrames;
 	}
 
-	public getVariables() {
-		this._sc.request('whos');
-		return Array<DebugProtocol.Variable>();
+	public async getListOfVariables() {
+		const lines = await this._sc.request('whos');
+		return RH.parseWhosResponse(lines);
+	}
+
+	public async getValueofVariable(vari: RH.VariableFromWhosRequest) {
+		const lines = await this._sc.request(vari.name);
+		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', 4);
+		if (RH.isSize1x1(vari.size)) {
+			return RH.parseVariable(lines);
+		} else {
+			// For now just return a unviewable variable
+			// TODO: able to handle multi-dimensional variables
+			return new Variable(vari.name, vari.size.join('x') +' ' + vari.class +  ' matrix');
+		}
+		
 	}
 
 	public async getSource(funcs: string[]): Promise<{ [func: string]: DebugProtocol.Source }> {
 		if (funcs.length === 0) {
 			return {};
 		}
-
-		let x: DebugProtocol.Source;
 
 		let lines = await this._sc.request('which ' + funcs.join(' '));
 		let files = RH.parseWhichResponse(lines);
@@ -177,16 +191,14 @@ export class OctaveRuntime extends EventEmitter {
 			ans[func] = <DebugProtocol.Source> { name: func, path: files[func] };
 		}
 		return ans;
-
 	}
 
-	// private methods
+	// helper methods
 	private resolveErrorMessage(lines: string[]) {
+		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', 4);
 		this._stackFrames = EH.getStackFrames(lines);
 		this.sendEvent('stopOnBreakpoint');
 	}
-
-
 
 
 	private sendEvent(event: string, ... args: any[]) {

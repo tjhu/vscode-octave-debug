@@ -2,6 +2,16 @@
  * Helper for parsing response from debug rumtime from stdout
  */
 import * as RX from './RegExp';
+import { consoleErr } from './utils';
+import { DebugProtocol } from 'vscode-debugprotocol/lib/debugProtocol';
+
+
+export interface VariableFromWhosRequest {
+	name: string;
+	size: string[];
+	class: string;
+	attribute: Set<string>;
+}
 
 /**
  * Check if lines is a complete response from debug
@@ -46,25 +56,17 @@ export function isAnswerResponse(lines: string[]) {
  * Check to see if lines is ['ans = $_', prompt]
  */
 export function isSingleAnswerRespnse(lines: string[]) {
-    const firstLine = splitByWhiteSpaces(lines[0]);
-
-    return firstLine.length === 3 && /* first line must be in '$varName = $varVal' format */
-        firstLine[0] === 'ans' &&
-        firstLine[1] === '=' &&
-        lines.length === 2; /* must only follow by a prompt */
+    return RX.singleLineVariable.test(lines[0]) && /* first line must be in '$varName = $varVal' format */
+        lines.filter(l => !RX.emptyLine.test(l)).length === 2; /* must only follow by a prompt */
 }
 
 /**
  * Check to see if lines is ['$varName =', ...$varVals , '', prompt]
  */
 export function isMultipleAnswerResponse(lines: string[]) {
-    const firstLine = splitByWhiteSpaces(lines[0]);
+    return RX.MultilineVariable.firstLine.test(lines[0]) &&
+        lines.length >= 3; /* must have at least three lines */
 
-    return firstLine.length === 2 && /* first line must be in 'ans =' format */
-        firstLine[0] === 'ans' &&
-        firstLine[1] === '=' &&
-        lines.length > 3 && /* must have only one trailing empty line follows by prompt */
-        lines[lines.length - 1] === '';
 }
 
 function getSingleAnswer(lines: string[]) {
@@ -104,8 +106,71 @@ export function parseWhichResponse(lines: string[]) {
     return ans;
 }
 
+export function parseWhoResponse(lines: string[]) {
+    if(lines.length !== 3) {
+        consoleErr('lines.length from who request is ' + lines.length + '. 3 is expected');
+        return [];
+    }
+    const line = lines[1];
+    return splitByWhiteSpaces(line);
+}
+
+export function parseWhosResponse(lines: string[]) {
+    lines = lines.slice(3, lines.length - 2);
+
+    let ans: VariableFromWhosRequest[] = [];
+    for(let line of lines) {
+        let arr = splitByWhiteSpaces(line);
+        if([4, 5].indexOf(arr.length) < 0) {
+            consoleErr('unexpected line from whos command: ', line);
+            break;
+        }
+        let hasAttribute = arr.length === 5;
+        let index = 0 + Number(hasAttribute);
+        ans.push(<VariableFromWhosRequest>{
+            name: arr[index++],
+            size: arr[index++].split('x'),
+            class: arr[index + 1],
+            attribute: hasAttribute ? new Set(arr[0]) : new Set()
+        });
+    }
+    return ans;
+}
+
+export function parseVariable(lines: string[]): DebugProtocol.Variable | undefined {
+    let name = splitByWhiteSpaces(lines[0])[0];
+    let value: string;
+    let error: boolean = false;
+
+    if(isSingleAnswerRespnse(lines)) {
+        let match = lines[0].match(RX.singleLineVariable);
+        if (match === null) {
+            consoleErr('unable to parse variable with lines', lines);
+            return undefined;
+        }
+        value = match[2];
+    } else if(isMultipleAnswerResponse(lines)) {
+        value = lines.slice(1, lines.length - 1).join('\n');
+    } else {
+        consoleErr('unable to parse variable with lines', lines);
+        return undefined;
+    }
+
+    return <DebugProtocol.Variable>{ name: name, value: value };
+}
+
 
 // Helpers
 function splitByWhiteSpaces(str: string) {
-    return str.split(/\s+/);
+    return removeEmptyLines(str.split(/\s+/));
+}
+
+export function removeEmptyLines(lines: string[]) {
+    return lines.filter(l => !RX.emptyLine.test(l));
+}
+
+export function isSize1x1(size: string[]) {
+    return size.length === 2 &&
+        size[0] === '1' &&
+        size[1] === '1';
 }

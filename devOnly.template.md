@@ -35,16 +35,23 @@ This extension contributes the following settings:
 
 Users appreciate release notes as you update your extension.
 
-### 0.0.0
+### 1.0.0
 
-Initial release of vscode Octave Debug Adapter extension
+Initial release of ...
 
+### 1.0.1
+
+Fixed issue #.
+
+### 1.1.0
+
+Added features X, Y, and Z.
 
 ## Future work
 
 * Add support for all data type (only support string currently).
 
-### Credit
+### Reference
 
-* [Microsoft/vscode-mock-debug](https://github.com/Microsoft/vscode-mock-debug) for providing the template
-* [raix/vscode-perl-debug](https://github.com/raix/vscode-perl-debug) for design ideas and StreamCatchers
+* [Microsoft/vscode-mock-debug](https://github.com/Microsoft/vscode-mock-debug) for the template
+* [raix/vscode-perl-debug](https://github.com/raix/vscode-perl-debug) for ideas

@@ -18,6 +18,16 @@ export const whichRequest = {
 	line: /^'(.+)' is a (?:function|script) from the file (.+)$/
 };
 
+export const whoRequest = {
+	greeter: /^Variables in the current scope:/,
+};
+
+export const singleLineVariable = /^\s*(.+)\s+=\s+(.+)$/;
+
+export const MultilineVariable = {
+	firstLine: /^\s*(.+)\s+=\s*$/
+};
+
 
 export const breakPoint = {
 	// The condition my condition was in eg.:

@@ -59,7 +59,7 @@ export class StreamCatcher {
 			}
 
             if (commandIsDone) {
-                const data = this.stdinLineBuffer;
+                const data = RH.removeEmptyLines(this.stdinLineBuffer);
                 this.stdinLineBuffer = [];
                 this.resolveRequest(data);
                 consoleLog(3, '\nSTARTOUT' + '-'.repeat(14) + '\n' + data.join('\n') + '\nENDOUT' + '-'.repeat(16) + '\n');
@@ -91,7 +91,7 @@ export class StreamCatcher {
 			}
 
             if (commandIsDone) {
-                const data = lineBuffer;
+                const data = RH.removeEmptyLines(lineBuffer);
                 lineBuffer = [];
                 resolveErrorMessage(data);
                 consoleLog(3, '\nSTARTERR' + '-'.repeat(14) + '\n' + data.join('\n') + '\nENDERR' + '-'.repeat(16) + '\n');
