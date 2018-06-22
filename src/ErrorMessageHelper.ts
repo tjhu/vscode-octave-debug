@@ -3,7 +3,7 @@
  */
 import * as RX from './RegExp';
 import { consoleErr } from './utils';
-import { DebugProtocol } from 'vscode-debugprotocol';
+import { OctaveStackFrame } from './OctaveRuntime';
 
 export function isStopMessage(lines: string[]) {
     if (lines.length < 3) {
@@ -14,21 +14,21 @@ export function isStopMessage(lines: string[]) {
         RX.stopMessage.thirdLine.test(lines[lines.length - 1]);
 }
 
-export function getStackFrames(lines: string[]): DebugProtocol.StackFrame[] {
+export function getStackFrames(lines: string[]): OctaveStackFrame[] {
     let i = lines.findIndex((s) => RX.stackFrame.start.test(s)) + 1;
     if (i < 0) {
         consoleErr('list stack frame is expected, but not found');
         return [];
     }
 
-    let ans: DebugProtocol.StackFrame[] = [];
+    let ans: OctaveStackFrame[] = [];
     let frameId = 0;
     let match;
     while(match = lines[i++].match(RX.stackFrame.frame)) {
-        ans.push(<DebugProtocol.StackFrame>{
+        ans.push(<OctaveStackFrame>{
             id: frameId++,
             name: match[1],
-            source: match[1] + '.m',
+            func: match[1],
             line: Number(match[2]),
             column: Number(match[3])
         });

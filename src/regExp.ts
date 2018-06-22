@@ -14,6 +14,10 @@ export const stackFrame = {
 	end: emptyLine
 };
 
+export const whichRequest = {
+	line: /^'(.+)' is a (?:function|script) from the file (.+)$/
+};
+
 
 export const breakPoint = {
 	// The condition my condition was in eg.:

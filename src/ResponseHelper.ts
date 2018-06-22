@@ -91,6 +91,19 @@ export function getAnswers(lines: string[]): string[][] {
     }
 }
 
+export function parseWhichResponse(lines: string[]) {
+    let ans: {[func: string]: string} = {};
+
+    lines.splice(lines.length - 1);
+    for(let line of lines) {
+        let match : RegExpMatchArray | null;
+        if(match = line.match(RX.whichRequest.line)) {
+            ans[match[1]] = match[2];
+        }
+    }
+    return ans;
+}
+
 
 // Helpers
 function splitByWhiteSpaces(str: string) {

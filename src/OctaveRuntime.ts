@@ -12,6 +12,16 @@ import * as RH from './ResponseHelper';
 import * as EH from './ErrorMessageHelper';
 import { consoleLog, consoleErr } from './utils';
 import { spawn, ChildProcess } from 'child_process';
+import { debugPrompt } from './RegExp';
+
+
+export interface OctaveStackFrame {
+	id: number;
+	name: string;
+	func: string;
+	line: number;
+	column: number;
+}
 
 
 /**
@@ -38,7 +48,7 @@ export class OctaveRuntime extends EventEmitter {
 	// so that the frontend can match events with breakpoints.
 	private _breakpointId = 1;
 
-	private _stackFrames: DebugProtocol.StackFrame[] = [];
+	private _stackFrames: OctaveStackFrame[] = [];
 
 
 	constructor() {
@@ -153,9 +163,26 @@ export class OctaveRuntime extends EventEmitter {
 		return Array<DebugProtocol.Variable>();
 	}
 
+	public async getSource(funcs: string[]): Promise<{ [func: string]: DebugProtocol.Source }> {
+		if (funcs.length === 0) {
+			return {};
+		}
+
+		let x: DebugProtocol.Source;
+
+		let lines = await this._sc.request('which ' + funcs.join(' '));
+		let files = RH.parseWhichResponse(lines);
+		let ans: { [func: string]: DebugProtocol.Source } = {};
+		for(let func in files) {
+			ans[func] = <DebugProtocol.Source> { name: func, path: files[func] };
+		}
+		return ans;
+
+	}
+
 	// private methods
 	private resolveErrorMessage(lines: string[]) {
-		// this._stackFrames = EH.getStackFrames(lines);
+		this._stackFrames = EH.getStackFrames(lines);
 		this.sendEvent('stopOnBreakpoint');
 	}
 

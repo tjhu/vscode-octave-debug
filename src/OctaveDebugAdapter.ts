@@ -47,7 +47,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	public constructor() {
 		super("octave-debug.txt");
 
-		consoleLog(1,"Initializeing debug adapter");
+		consoleLog(1, "Initializeing debug adapter");
 		// this debugger uses one-based lines and columns
 		this.setDebuggerLinesStartAt1(true);
 		this.setDebuggerColumnsStartAt1(true);
@@ -87,7 +87,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	 * to interrogate the features the debug adapter provides.
 	 */
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-		consoleLog(1,"initializeRequest received");
+		consoleLog(1, "initializeRequest received");
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
 
@@ -112,7 +112,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
-		consoleLog(1,"launchRequest received.");
+		consoleLog(1, "launchRequest received.");
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 		logger.log("setup");
@@ -129,7 +129,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments) {
-		consoleLog(1,"setBreakPointsRequest received");
+		consoleLog(1, "setBreakPointsRequest received");
 		const path = <string>args.source.path;
 		const func = Path.parse(path).name;
 		const clientLines = args.lines || [];
@@ -148,7 +148,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async threadsRequest(response: DebugProtocol.ThreadsResponse) {
-		consoleLog(1,'threadsRequest received');
+		consoleLog(1, 'threadsRequest received');
 		// runtime supports now threads so just return a default thread.
 		response.body = {
 			threads: [
@@ -159,23 +159,42 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments) {
-		consoleLog(1,'stackTraceRequest received');
+		consoleLog(1, 'stackTraceRequest received');
 
-		const startFrame = typeof args.startFrame === 'number' ? args.startFrame : 0;
 		const maxLevels = typeof args.levels === 'number' ? args.levels : 1000;
-		const endFrame = startFrame + maxLevels;
 
-		// const stackFrames = this._runtime.getStackFrames();
+		const stackFrames = this._runtime.getStackFrames().slice(0, maxLevels);
+		const funcs = stackFrames.map(s => {
+			return s.func;
+		});
+		const sources = await this._runtime.getSource(funcs);
+
+		const actualStackFrames = stackFrames.map(f => {
+			if (f.func in sources) {
+				return <DebugProtocol.StackFrame> {
+					id: f.id,
+					name: f.func,
+					source: sources[f.func],
+					line: f.line,
+					column: f.column
+				};
+			} else {
+				return <DebugProtocol.StackFrame> {
+					id: f.id,
+					name: f.func
+				};
+			}
+		});
 
 		response.body = {
-			stackFrames: [<DebugProtocol.StackFrame>{ id: 0, name: 'frame', source: this.createSource('fuck.m'), line: 1, column: 3}],
+			stackFrames: actualStackFrames,
 			totalFrames: 1
 		};
 		this.sendResponse(response);
 	}
 
 	protected async scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments) {
-		consoleLog(1,'scopesRequest received');
+		consoleLog(1, 'scopesRequest received');
 		const frameReference = args.frameId;
 		const scopes = new Array<Scope>();
 		// scopes.push(new Scope("Local", this._variableHandles.create("local"), false));
@@ -189,7 +208,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments) {
-		consoleLog(1,'variablesRequest received');
+		consoleLog(1, 'variablesRequest received');
 		const variables = new Array<DebugProtocol.Variable>();
 		const id = this._variableHandles.get(args.variablesReference);
 		if (id !== null) {
@@ -236,7 +255,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 	}
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
-		consoleLog(1,'evaluateRequest received');
+		consoleLog(1, 'evaluateRequest received');
 		let reply: string | undefined = undefined;
 
 		response.body = {
