@@ -86,6 +86,11 @@
 						"matlab"
 					]
 				},
+				"linux": {
+					"configurationSnippets": {
+						"exec": "octave"
+					}
+				},
 				"configurationAttributes": {
 					"launch": {
 						"required": [
@@ -124,11 +129,11 @@
 					{
 						"type": "octave",
 						"request": "launch",
-						"name": "A hella awesome debugger by a good boy",
+						"name": "Octave Debug Adapter(beta)",
 						"cwd": "${workspaceFolder}/",
 						"exec": "octave-cli",
 						"program": "${workspaceFolder}\\${command:AskForProgramName}",
-						"stopOnEntry": true
+						"stopOnEntry": false
 					}
 				],
 				"configurationSnippets": [

@@ -257,7 +257,7 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		
 		// TODO: why not asking octave runtime about what the hell that expression is?
 		if(args.expression in this._variablesWithTypes) {
-			let v = this._variablesWithTypes[args.expression]
+			let v = this._variablesWithTypes[args.expression];
 			response.body = {
 				result:  v.size.join('x') + ' ' + v.class,
 				variablesReference: 0

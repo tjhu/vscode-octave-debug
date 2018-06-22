@@ -37,7 +37,8 @@ export class OctaveRuntime extends EventEmitter {
 	public get sourceFile() {
 		return this._sourceFile;
 	}
-	private file: string = "";
+	// The function that is being debugged
+	private currentFunction: string = "";
 
 	// the contents (= lines) of the one and only file
 	private _sourceLines: string[] = [];
@@ -60,7 +61,7 @@ export class OctaveRuntime extends EventEmitter {
 		let pathProperty = Path.parse(args.program);
 		let dir = pathProperty.dir;
 		let file = pathProperty.name;
-		this.file = file;
+		this.currentFunction = file;
 
 		let session: ChildProcess;
 		{
@@ -81,6 +82,10 @@ export class OctaveRuntime extends EventEmitter {
 		await this._sc.request('debug_on_interrupt(1)');
 		// Remove blank lines
 		await this._sc.request('format compact');
+		// Set breakpoint on first line if step on entry
+		if (args.stopOnEntry) {
+			await this.setBreakPoints(this.currentFunction, [1]);
+		}
 
 		// Verify file and folder existence
 		// xxx: We can improve the error handling
@@ -99,7 +104,7 @@ export class OctaveRuntime extends EventEmitter {
 	 */
 	public async start() {	
 		this._sc.inDebugMode = true;
-		this._sc.request(this.file);
+		this._sc.request(this.currentFunction);
 		
 		consoleLog(1,'start debugging');
 	}

@@ -1,31 +1,19 @@
-# octave-debug README
+# VSCode Octave Debug Adapter Extension (Alpha)
 
-This is the README for your extension "octave-debug". After writing up a brief description, we recommend including the following sections.
+This is the an simple debugger adapter for Octave on Visual Studio Code
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+* Breakpoints
+* Stacktraces
+* Variable inspections
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+![Octave Debug Demo](images/demo.gif)
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+* Octave executable. [Download](https://www.gnu.org/software/octave/download.html)
+* Add Octave executable to path
 
 ## Known Issues
 
@@ -33,18 +21,15 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 0.0.0
 
 Initial release of vscode Octave Debug Adapter extension
-
 
 ## Future work
 
 * Add support for all data type (only support string currently).
 
-### Credit
+## Credit
 
 * [Microsoft/vscode-mock-debug](https://github.com/Microsoft/vscode-mock-debug) for providing the template
-* [raix/vscode-perl-debug](https://github.com/raix/vscode-perl-debug) for design ideas and StreamCatchers
+* [raix/vscode-perl-debug](https://github.com/raix/vscode-perl-debug) for design ideas and StreamCatcher
