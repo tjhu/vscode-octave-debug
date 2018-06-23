@@ -8,16 +8,10 @@ This is the an simple debugger adapter for Octave on Visual Studio Code
 * Stacktraces
 * Variable inspections
 
-![Octave Debug Demo](images/demo.gif)
-
 ## Requirements
 
 * Octave executable. [Download](https://www.gnu.org/software/octave/download.html)
 * Add Octave executable to path(or you can specify full path in launch.json)
-
-## Known Issues
-
-* three or above dimensional(3D+) variables are not supported
 
 ## Release Notes
 

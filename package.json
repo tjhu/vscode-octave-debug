@@ -8,7 +8,7 @@
 		"vscode": "^1.18.0",
 		"node": "^7.9.0"
 	},
-	"icon": "images/octave-debug-icon.png",
+	"icon": "images/octave-logo.png",
 	"categories": [
 		"Debuggers"
 	],
@@ -31,7 +31,6 @@
 		"publish": "vsce publish"
 	},
 	"dependencies": {
-		"await-notify": "1.0.1",
 		"vscode-debugadapter": "1.27.0",
 		"vscode-debugprotocol": "1.27.0"
 	},
