@@ -71,6 +71,9 @@ export class OctaveDebugSession extends LoggingDebugSession {
 		this._runtime.on('stopOnException', () => {
 			this.sendEvent(new StoppedEvent('exception', OctaveDebugSession.THREAD_ID));
 		});
+		this._runtime.on('stopOnError', () => {
+			this.sendEvent(new StoppedEvent('error', OctaveDebugSession.THREAD_ID));
+		});
 		// this._runtime.on('breakpointValidated', (bp: OctaveBreakpoint) => {
 		// 	this.sendEvent(new BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
 		// });

@@ -4,6 +4,7 @@
 import * as RX from './RegExp';
 import { consoleErr } from './utils';
 import { OctaveStackFrame } from './OctaveRuntime';
+import * as Path from 'path';
 
 export function isStopMessage(lines: string[]) {
     if (lines.length < 3) {
@@ -34,4 +35,28 @@ export function getStackFrames(lines: string[]): OctaveStackFrame[] {
         });
     }
     return ans;
+}
+
+export function getStackFrameFromStopMessage(lines: string[]): OctaveStackFrame {
+    const firstLine = lines[0];
+    const match = firstLine.match(RX.stopMessage.firstLine);
+    if (match === null) {
+        consoleErr('unexpected first line in: ', lines);
+        return <OctaveStackFrame> {
+            id: 0,
+            name: 'error',
+            func: 'error',
+            line: 0,
+            column: 0
+        };
+    }
+    const fullPath = match[1];
+    const func = Path.parse(fullPath).name;
+    return <OctaveStackFrame>{
+        id: 0,
+        name: func,
+        func: func,
+        line: Number(match[2]),
+        column: 0
+    };
 }

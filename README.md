@@ -13,7 +13,7 @@ This is the an simple debugger adapter for Octave on Visual Studio Code
 ## Requirements
 
 * Octave executable. [Download](https://www.gnu.org/software/octave/download.html)
-* Add Octave executable to path
+* Add Octave executable to path(or you can specify full path in launch.json)
 
 ## Known Issues
 
@@ -27,7 +27,8 @@ Initial release of vscode Octave Debug Adapter extension
 
 ## Future work
 
-* Add support for all data type (only support string currently).
+* Add support for all data type (only support 1D currently).
+* Add support for setFunctionBreakpoints.
 
 ## Credit
 

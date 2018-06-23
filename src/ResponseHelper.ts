@@ -74,7 +74,7 @@ function getSingleAnswer(lines: string[]) {
 }
 
 function getMultipleAnswers(lines: string[]) {
-    const data = lines.slice(3, lines.length - 3);
+    const data = lines.slice(1, lines.length - 1);
     let answers: string[][] = [];
     for (let line of data) {
         let entries = splitByWhiteSpaces(line);

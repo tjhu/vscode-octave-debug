@@ -32,6 +32,8 @@ export class OctaveRuntime extends EventEmitter {
 
 	private _sc: StreamCatcher = new StreamCatcher();
 
+	private _inDebug: boolean = false;
+
 	// the initial (and one and only) file we are 'debugging'
 	private _sourceFile: string = "";
 	public get sourceFile() {
@@ -112,8 +114,9 @@ export class OctaveRuntime extends EventEmitter {
 	/**
 	 * Continue execution to the end
 	 */
-	public continue() {
-		
+	public async continue() {
+		this._inDebug = false;
+		await this._sc.request('dbcont');
 	}
 
 	/**
@@ -202,7 +205,20 @@ export class OctaveRuntime extends EventEmitter {
 	private resolveErrorMessage(lines: string[]) {
 		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', 4);
 		this._stackFrames = EH.getStackFrames(lines);
-		this.sendEvent('stopOnBreakpoint');
+		let err = true;
+		if (this._stackFrames.length === 0) {
+			this._stackFrames.push(EH.getStackFrameFromStopMessage(lines));
+			err = false;
+		}
+		if (err) {
+			this.sendEvent('stopOnError');
+			this._inDebug = true;
+		} else if (this._inDebug) {
+			this.sendEvent('stopOnStep');
+		} else {
+			this._inDebug = true;
+			this.sendEvent('stopOnBreakpoint');
+		}
 	}
 
 
