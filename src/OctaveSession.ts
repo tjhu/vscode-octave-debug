@@ -23,7 +23,7 @@ export class OctaveDebuggerSession {
 		this.kill = () => session.kill();
 	}
 
-	public static spawnSession(exec: string, args: string[]=[], options: {}={}) {
+	public static spawnSession(exec: string, args: string[]=[], options:{}={}) {
 		return new OctaveDebuggerSession(spawn(exec, args, options));
 	}
 

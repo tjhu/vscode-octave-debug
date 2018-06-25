@@ -147,26 +147,13 @@
 				],
 				"configurationSnippets": [
 					{
-						"label": "Octave: Windows",
+						"label": "Octave Debug: Launch",
 						"description": "A new configuration for 'debugging' a user selected octave file.",
 						"body": {
 							"type": "octave",
 							"request": "launch",
 							"name": "A hella awesome debugger by a good boy",
 							"exec": "octave-cli",
-							"cwd": "^\"\\${workspaceFolder}/\"",
-							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
-							"stopOnEntry": true
-						}
-					},
-					{
-						"label": "Octave: Linux/OSX",
-						"description": "A new configuration for 'debugging' a user selected octave file.",
-						"body": {
-							"type": "octave",
-							"request": "launch",
-							"name": "A hella awesome debugger by a good boy",
-							"exec": "octave",
 							"cwd": "^\"\\${workspaceFolder}/\"",
 							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
 							"stopOnEntry": true
