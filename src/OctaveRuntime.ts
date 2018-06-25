@@ -10,7 +10,7 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { StreamCatcher } from './StreamCatcher';
 import * as RH from './ResponseHelper';
 import * as EH from './ErrorMessageHelper';
-import { consoleLog, consoleErr } from './utils';
+import { consoleLog, consoleErr } from './Utils';
 import { spawn, ChildProcess } from 'child_process';
 import { debugPrompt } from './RegExp';
 import { logger, Variable } from 'vscode-debugadapter';

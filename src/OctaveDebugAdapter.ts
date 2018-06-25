@@ -8,7 +8,7 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { OctaveRuntime } from './OctaveRuntime';
 import * as Path from 'path';
-import { consoleLog, consoleErr } from './utils';
+import { consoleLog, consoleErr } from './Utils';
 import { VariableFromWhosRequest } from './ResponseHelper';
 
 

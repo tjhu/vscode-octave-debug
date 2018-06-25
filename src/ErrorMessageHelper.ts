@@ -2,7 +2,7 @@
  * Helper for parsing message from debug rumtime from stderr
  */
 import * as RX from './RegExp';
-import { consoleErr } from './utils';
+import { consoleErr } from './Utils';
 import { OctaveStackFrame } from './OctaveRuntime';
 import * as Path from 'path';
 

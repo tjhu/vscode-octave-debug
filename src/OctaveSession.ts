@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import { Readable, Writable } from 'stream';
-import { consoleLog, consoleErr } from './utils';
+import { consoleLog, consoleErr } from './Utils';
 
 export class OctaveDebuggerSession {
 	private ErrFunc = () => { consoleErr('Octave runtime is being used before initialized'); };

@@ -2,7 +2,8 @@
  * Helper for parsing response from debug rumtime from stdout
  */
 import * as RX from './RegExp';
-import { consoleErr } from './utils';
+import * as Utils from './Utils';
+import { consoleErr } from './Utils';
 import { DebugProtocol } from 'vscode-debugprotocol/lib/debugProtocol';
 
 
@@ -70,14 +71,14 @@ export function isMultipleAnswerResponse(lines: string[]) {
 }
 
 function getSingleAnswer(lines: string[]) {
-    return splitByWhiteSpaces(lines[0])[2];
+    return Utils.splitByWhiteSpaces(lines[0])[2];
 }
 
 function getMultipleAnswers(lines: string[]) {
     const data = lines.slice(1, lines.length - 1);
     let answers: string[][] = [];
     for (let line of data) {
-        let entries = splitByWhiteSpaces(line);
+        let entries = Utils.splitByWhiteSpaces(line);
         answers.push(entries);
     }
     return answers;
@@ -112,7 +113,7 @@ export function parseWhoResponse(lines: string[]) {
         return [];
     }
     const line = lines[1];
-    return splitByWhiteSpaces(line);
+    return Utils.splitByWhiteSpaces(line);
 }
 
 export function parseWhosResponse(lines: string[]) {
@@ -120,7 +121,7 @@ export function parseWhosResponse(lines: string[]) {
 
     let ans: VariableFromWhosRequest[] = [];
     for(let line of lines) {
-        let arr = splitByWhiteSpaces(line);
+        let arr = Utils.splitByWhiteSpaces(line);
         if([4, 5].indexOf(arr.length) < 0) {
             consoleErr('unexpected line from whos command: ', line);
             break;
@@ -138,7 +139,7 @@ export function parseWhosResponse(lines: string[]) {
 }
 
 export function parseVariable(lines: string[]): DebugProtocol.Variable | undefined {
-    let name = splitByWhiteSpaces(lines[0])[0];
+    let name = Utils.splitByWhiteSpaces(lines[0])[0];
     let value: string;
     let error: boolean = false;
 
@@ -159,15 +160,13 @@ export function parseVariable(lines: string[]): DebugProtocol.Variable | undefin
     return <DebugProtocol.Variable>{ name: name, value: value };
 }
 
+export function getVariableName(lines: string[]) {
+    return Utils.splitByWhiteSpaces(lines[0])[0];
+}
+
 
 // Helpers
-function splitByWhiteSpaces(str: string) {
-    return removeEmptyLines(str.split(/\s+/));
-}
 
-export function removeEmptyLines(lines: string[]) {
-    return lines.filter(l => !RX.emptyLine.test(l));
-}
 
 export function isSize1x1(size: string[]) {
     return size.length === 2 &&
