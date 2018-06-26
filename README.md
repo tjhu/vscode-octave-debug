@@ -73,9 +73,13 @@ How to install octave and add to PATH. Ignore these if you have already done it.
 
 ## Release Notes
 
+### 0.0.1
+
+* Add instructions for setting up the environment
+
 ### 0.0.0
 
-Initial release of vscode Octave Debug Adapter extension
+* Initial release of vscode Octave Debug Adapter extension
 * Support set breakpoints, stop on error, stacktraces, and basic variable inspection
 
 ## Future work
