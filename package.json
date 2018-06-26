@@ -2,7 +2,7 @@
 	"name": "octave-debug",
 	"displayName": "Octave Debug",
 	"description": "Debug support for Octave",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"publisher": "tianjiaohuang",
 	"engines": {
 		"vscode": "^1.18.0",
