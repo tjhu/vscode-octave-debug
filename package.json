@@ -12,6 +12,7 @@
 	"categories": [
 		"Debuggers"
 	],
+	"preview": true,
 	"private": true,
 	"repository": {
 		"type": "git",
