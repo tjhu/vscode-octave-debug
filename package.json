@@ -51,6 +51,19 @@
 		"onCommand:extension.octave-debug.getProgramName"
 	],
 	"contributes": {
+		"commands": [
+			{
+			  "command": "extension.octave-debug.getProgramName",
+			  "title": "Debug With Octave"
+			}
+		  ],
+		"menus": {
+			"explorer/context": [{
+				"when": "resourceLangId == octave",
+				"command": "extension.octave-debug.getProgramName",
+				"group": "1_octave"
+			}]
+		},
 		"languages": [
 			{
 				"id": "octave",
@@ -139,24 +152,21 @@
 					{
 						"type": "octave",
 						"request": "launch",
-						"name": "Octave Debug Adapter(beta)",
-						"cwd": "${workspaceFolder}/",
+						"name": "Octave Debug Adapter(preview)",
 						"exec": "octave-cli",
 						"program": "${command:AskForProgramName}"
 					}
 				],
 				"configurationSnippets": [
 					{
-						"label": "Octave Debug: Launch",
+						"label": "Octave: Launch",
 						"description": "A new configuration for 'debugging' a user selected octave file.",
 						"body": {
 							"type": "octave",
 							"request": "launch",
-							"name": "Octave Debug",
+							"name": "Octave Debug Adapter(preview)",
 							"exec": "octave-cli",
-							"cwd": "^\"\\${workspaceFolder}/\"",
-							"program": "^\"\\${command:AskForProgramName}\"",
-							"stopOnEntry": false
+							"program": "^\"\\${command:AskForProgramName}\""
 						}
 					}
 				],

@@ -14,6 +14,7 @@ import { consoleLog, consoleErr } from './Utils';
 import { spawn, ChildProcess } from 'child_process';
 import { debugPrompt } from './RegExp';
 import { logger, Variable } from 'vscode-debugadapter';
+import { LogLevel } from 'vscode-debugadapter/lib/logger';
 
 
 export interface OctaveStackFrame {
@@ -176,7 +177,7 @@ export class OctaveRuntime extends EventEmitter {
 
 	public async getValueofVariable(vari: RH.VariableFromWhosRequest) {
 		const lines = await this._sc.request(vari.name);
-		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', 4);
+		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', LogLevel.Verbose);
 		if (RH.isSize1x1(vari.size)) {
 			return RH.parseVariable(lines);
 		} else {

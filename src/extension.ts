@@ -12,22 +12,27 @@ import * as Net from 'net';
  */
 const EMBED_DEBUG_ADAPTER = true;
 
+async function getProgramName(args: any) {
+	
+	let editor = vscode.window.activeTextEditor;
+	let defaultFileName: string;
+	if (args && args.fsPath) {
+		defaultFileName = args.fsPath;
+	} else if (editor) {
+		defaultFileName = editor.document.fileName;
+
+	} else {
+		defaultFileName = "main.m";
+	}
+
+	return vscode.window.showInputBox({
+		placeHolder: "Please enter the name of an octave/matlab file in the workspace folder",
+		value: defaultFileName
+	});
+}
+
 export function activate(context: vscode.ExtensionContext) {
-	context.subscriptions.push(vscode.commands.registerCommand('extension.octave-debug.getProgramName', config => {
-		let editor = vscode.window.activeTextEditor;
-		let defaultFileName: string;
-		if (editor) {
-			defaultFileName = editor.document.fileName;
-
-		} else {
-			defaultFileName = "main.m";
-		}
-
-		return vscode.window.showInputBox({
-			placeHolder: "Please enter the name of an octave/matlab file in the workspace folder",
-			value: defaultFileName
-		});
-	}));
+	context.subscriptions.push(vscode.commands.registerCommand('extension.octave-debug.getProgramName', getProgramName));
 
 	// register a configuration provider for 'octave' debug type
 	const provider = new OctaveDebugConfigurationProvider();

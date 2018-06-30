@@ -1,4 +1,4 @@
-# VSCode Octave Debug Adapter Extension (Alpha)
+# VSCode Octave Debug Adapter Extension (preview)
 
 This is the an simple debugger adapter for Octave on Visual Studio Code
 
@@ -13,6 +13,28 @@ How to install octave and add to PATH. Ignore these if you have already done it.
 * [Windows Setup Guide](#windows-setup-guide)
 * [MacOS Setup Guide](#macos-setup-guide)
 * [Linux Setup Guide](#linux-setup-guide)
+
+## Usage
+
+### First time setup
+* From menu, select **Debug -> Add Configuration**
+* Using **Add Cofiguration** button to add `Octave: Launch` to your launch.json (You don't need to add one if there is already one).
+* Your launch.json should looks similar to the following:
+  ```
+  {
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "octave",
+            "request": "launch",
+            "name": "Octave Debug Adapter(preview)",
+            "exec": "octave-cli",
+            "program": "${command:AskForProgramName}"
+        }
+    ]
+  }
+  ```
+
 
 ---
 
