@@ -17,12 +17,12 @@ export function activate(context: vscode.ExtensionContext) {
 		let editor = vscode.window.activeTextEditor;
 		let defaultFileName: string;
 		if (editor) {
-			defaultFileName = vscode.workspace.asRelativePath(editor.document.fileName);
+			defaultFileName = editor.document.fileName;
 
 		} else {
-			defaultFileName = "hello.m";
+			defaultFileName = "main.m";
 		}
-		
+
 		return vscode.window.showInputBox({
 			placeHolder: "Please enter the name of an octave/matlab file in the workspace folder",
 			value: defaultFileName

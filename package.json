@@ -105,7 +105,7 @@
 							"program": {
 								"type": "string",
 								"description": "Absolute path to a text file.",
-								"default": "${workspaceFolder}\\${command:AskForProgramName}"
+								"default": "${command:AskForProgramName}"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
@@ -142,8 +142,7 @@
 						"name": "Octave Debug Adapter(beta)",
 						"cwd": "${workspaceFolder}/",
 						"exec": "octave-cli",
-						"program": "${workspaceFolder}\\${command:AskForProgramName}",
-						"stopOnEntry": false
+						"program": "${command:AskForProgramName}"
 					}
 				],
 				"configurationSnippets": [
@@ -153,11 +152,11 @@
 						"body": {
 							"type": "octave",
 							"request": "launch",
-							"name": "A hella awesome debugger by a good boy",
+							"name": "Octave Debug",
 							"exec": "octave-cli",
 							"cwd": "^\"\\${workspaceFolder}/\"",
-							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
-							"stopOnEntry": true
+							"program": "^\"\\${command:AskForProgramName}\"",
+							"stopOnEntry": false
 						}
 					}
 				],
