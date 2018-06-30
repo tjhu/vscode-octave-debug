@@ -1,6 +1,11 @@
-MIT License
+----------------------------------------------------------------------------------------------
+# template from Microsoft/vscode-mock-debug 
 
-Copyright (c) 2018 Tianjiao Huang
+Copyright (c) Microsoft Corporation
+
+All rights reserved. 
+
+MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +27,11 @@ SOFTWARE.
 
 
 ----------------------------------------------------------------------------------------------
-For the template at Microsoft/vscode-mock-debug that I used to modified with
-
-Copyright (c) Microsoft Corporation
-
-All rights reserved. 
+# StreamCatcher
 
 MIT License
+
+Copyright (c) 2016 Morten N.O. Nørgaard Henriksen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
