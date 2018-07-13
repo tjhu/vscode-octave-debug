@@ -178,6 +178,9 @@ export class OctaveRuntime extends EventEmitter {
 	public async getValueofVariable(vari: RH.VariableFromWhosRequest) {
 		const lines = await this._sc.request(vari.name);
 		logger.log(lines.slice(0, lines.length - 1).join('\n') + '\n', LogLevel.Verbose);
+		return RH.parseVariable(lines);
+
+		// Future work, if user request to add reviewing response line by line
 		if (RH.isSize1x1(vari.size)) {
 			return RH.parseVariable(lines);
 		} else {
