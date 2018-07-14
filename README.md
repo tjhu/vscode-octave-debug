@@ -95,6 +95,10 @@ How to install octave and add to PATH. Ignore these if you have already done it.
 
 ## Release Notes
 
+### 0.0.3
+
+* Inspect value of a variable by hovering over its name in **VARIABLES** in **DEBUG** window
+
 ### 0.0.2
 
 * Support debugging a file by right-clicking it
