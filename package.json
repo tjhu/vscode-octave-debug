@@ -53,16 +53,18 @@
 	"contributes": {
 		"commands": [
 			{
-			  "command": "extension.octave-debug.getProgramName",
-			  "title": "Debug With Octave"
-			}
-		  ],
-		"menus": {
-			"explorer/context": [{
-				"when": "resourceLangId == octave",
 				"command": "extension.octave-debug.getProgramName",
-				"group": "1_octave"
-			}]
+				"title": "Debug With Octave"
+			}
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceLangId == octave",
+					"command": "extension.octave-debug.getProgramName",
+					"group": "1_octave"
+				}
+			]
 		},
 		"languages": [
 			{

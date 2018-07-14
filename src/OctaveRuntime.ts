@@ -181,13 +181,13 @@ export class OctaveRuntime extends EventEmitter {
 		return RH.parseVariable(lines);
 
 		// Future work, if user request to add reviewing response line by line
-		if (RH.isSize1x1(vari.size)) {
-			return RH.parseVariable(lines);
-		} else {
-			// For now just return a unviewable variable
-			// TODO: able to handle multi-dimensional variables
-			return new Variable(vari.name, vari.size.join('x') +' ' + vari.class +  ' matrix');
-		}
+		// if (RH.isSize1x1(vari.size)) {
+		// 	return RH.parseVariable(lines);
+		// } else {
+		// 	// For now just return a unviewable variable
+		// 	// TODO: able to handle multi-dimensional variables
+		// 	return new Variable(vari.name, vari.size.join('x') +' ' + vari.class +  ' matrix');
+		// }
 		
 	}
 
